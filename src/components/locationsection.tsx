@@ -48,18 +48,21 @@ export const LocationSection = () => {
 
             <FadeIn delay={0.4} className="flex gap-4">
               <a
+                aria-label="Instagram Correa & Laia Advocacia"
                 href="https://www.instagram.com/correaelaia.advocacia"
                 className="w-10 h-10 bg-brand text-white rounded-full flex items-center justify-center hover:bg-primary transition-colors"
               >
                 <Instagram size={20} />
               </a>
               <a
+                aria-label="Facebook Correa & Laia Advocacia"
                 href="https://www.facebook.com/profile.php?id=61568707289617"
                 className="w-10 h-10 bg-brand text-white rounded-full flex items-center justify-center hover:bg-primary transition-colors"
               >
                 <Facebook size={20} />
               </a>
               <a
+                aria-label="LinkedIn Correa & Laia Advocacia"
                 href="https://www.linkedin.com/company/correa-laia-advocacia"
                 className="w-10 h-10 bg-brand text-white rounded-full flex items-center justify-center hover:bg-primary transition-colors"
               >
@@ -80,6 +83,7 @@ export const LocationSection = () => {
               allowFullScreen
               loading="lazy"
               referrerPolicy="no-referrer-when-downgrade"
+              aria-label="Google Maps localização Correa & Laia Advocacia"
             />
           </FadeIn>
         </div>

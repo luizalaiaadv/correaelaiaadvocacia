@@ -9,6 +9,7 @@ export const Testimonials = () => {
       image:
         'https://lh3.googleusercontent.com/a-/ALV-UjXxrqKaCwp3XyGhBAuEcTE5xRCcxvz_DiKiVJ6Y7G7ZOpYv9Wg=w90-h90-p-rp-mo-br100',
       href: 'https://maps.app.goo.gl/CRmpXt1i6ZV4hAAi6',
+      arialabel: 'Depoimento sobre Correa & Laia Advocacia',
     },
     {
       name: 'Iza Cristina',
@@ -16,6 +17,7 @@ export const Testimonials = () => {
       image:
         'https://lh3.googleusercontent.com/a-/ALV-UjUhYW7FXT1aZwA_NDJofJZSOWmpPx8KlJq65V5RdTrvX5J_jscSzQ=w45-h45-p-rp-mo-ba4-br100',
       href: 'https://maps.app.goo.gl/5atFxn1uGigSDeQ69',
+      arialabel: 'Depoimento sobre Correa & Laia Advocacia',
     },
     {
       name: 'Thauana Santos',
@@ -23,6 +25,7 @@ export const Testimonials = () => {
       image:
         'https://lh3.googleusercontent.com/a-/ALV-UjVL5kvM6Fc2HF72IWtTreLEDzTDOdRAHg9EdI0xGZB0wkpRAICM=w45-h45-p-rp-mo-br100',
       href: 'https://maps.app.goo.gl/E7hsxSKS8iGrmgfB8',
+      arialabel: 'Depoimento sobre Correa & Laia Advocacia',
     },
   ];
 
@@ -79,6 +82,7 @@ export const Testimonials = () => {
                   </div>
                   <div className="mt-2">
                     <a
+                      aria-label={item.arialabel}
                       href={item.href}
                       target="_blank"
                       rel="noopener noreferrer"
