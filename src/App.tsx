@@ -24,7 +24,7 @@ import { FloatingWhatsApp } from './components/floatingwhatsApp';
 export default function App() {
   useEffect(() => {
     const tagManagerArgs = {
-      gtmId: 'GTM-XXXXXXX' // Substitua pelo seu ID do GTM
+      gtmId: 'GTM-KFXXZS4M', // Substitua pelo seu ID do GTM
     };
     TagManager.initialize(tagManagerArgs);
   }, []);

@@ -4,28 +4,8 @@ export const Footer = () => {
       <div className="py-12 px-6">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 flex items-center justify-center">
-              <svg viewBox="0 0 100 100" className="w-full h-full fill-white">
-                <path d="M50 10C27.9 10 10 27.9 10 50s17.9 40 40 40 40-17.9 40-40S72.1 10 50 10zm0 75c-19.3 0-35-15.7-35-35s15.7-35 35-35 35 15.7 35 35-15.7 35-35 35z" />
-                <text
-                  x="50"
-                  y="58"
-                  textAnchor="middle"
-                  fontSize="20"
-                  fontWeight="bold"
-                  className="font-display"
-                >
-                  CL
-                </text>
-              </svg>
-            </div>
-            <div className="flex flex-col">
-              <span className="font-display font-bold text-sm tracking-widest">
-                CORREA & LAIA
-              </span>
-              <span className="text-[8px] tracking-[0.3em] uppercase opacity-60">
-                ADVOCACIA
-              </span>
+            <div className="w-20 h-20 flex items-center justify-center">
+              <img src="/logofooter.png" alt="logo" />
             </div>
           </div>
 

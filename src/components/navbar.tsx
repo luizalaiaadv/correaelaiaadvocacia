@@ -65,32 +65,7 @@ export const Navbar = () => {
         <div className="flex items-center gap-2">
           <div className="w-24 h-12 flex items-center justify-center">
             <img src="/logo.png" alt="logo" />
-            {/* <svg viewBox="0 0 100 100" className="w-full h-full fill-primary">
-              <path d="M50 10C27.9 10 10 27.9 10 50s17.9 40 40 40 40-17.9 40-40S72.1 10 50 10zm0 75c-19.3 0-35-15.7-35-35s15.7-35 35-35 35 15.7 35 35-15.7 35-35 35z" />
-              <path d="M50 25c-13.8 0-25 11.2-25 25s11.2 25 25 25 25-11.2 25-25-11.2-25-25-25zm0 45c-11 0-20-9-20-20s9-20 20-20 20 9 20 20-9 20-20 20z" />
-              <text
-                x="50"
-                y="58"
-                textAnchor="middle"
-                fontSize="20"
-                fontWeight="bold"
-                className="font-display"
-              >
-                CL
-              </text>
-            </svg> */}
           </div>
-          {/* <div className="flex flex-col">
-            <img src="/logo.png" alt="logo" />
-            <span
-              className={cn(
-                'text-[10px] tracking-[0.2em] uppercase',
-                isScrolled ? 'text-primary' : 'text-primary',
-              )}
-            >
-              ADVOCACIA
-            </span>
-          </div> */}
         </div>
 
         {/* Desktop Menu */}
