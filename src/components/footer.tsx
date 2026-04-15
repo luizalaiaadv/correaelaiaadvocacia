@@ -9,7 +9,7 @@ export const Footer = () => {
             </div>
           </div>
 
-          <div className="text-xs opacity-60 tracking-wider text-center md:text-right">
+          <div className="text-xs opacity-80 tracking-wider text-center md:text-right">
             © {new Date().getFullYear()} Correa & Laia Advocacia. Todos os
             direitos reservados.
             <br />

@@ -64,7 +64,14 @@ export const Navbar = () => {
       <div className="max-w-7xl mx-auto flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className="w-24 h-12 flex items-center justify-center">
-            <img src="/logo.png" alt="logo" width={96} height={48} fetchPriority="high" decoding="sync" />
+            <img
+              src="/logo.png"
+              alt="logo"
+              width={96}
+              height={48}
+              fetchPriority="high"
+              decoding="sync"
+            />
           </div>
         </div>
 
@@ -93,6 +100,8 @@ export const Navbar = () => {
 
         {/* Mobile Toggle */}
         <button
+          id="button-menu"
+          aria-label="Button menu"
           className="md:hidden text-brand"
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
         >
