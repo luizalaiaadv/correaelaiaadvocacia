@@ -64,7 +64,7 @@ export const Navbar = () => {
       <div className="max-w-7xl mx-auto flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className="w-24 h-12 flex items-center justify-center">
-            <img src="/logo.png" alt="logo" />
+            <img src="/logo.png" alt="logo" width={96} height={48} />
           </div>
         </div>
 
