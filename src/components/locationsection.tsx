@@ -73,7 +73,7 @@ export const LocationSection = () => {
 
           <FadeIn
             delay={0.4}
-            className="h-[450px] rounded-3xl overflow-hidden shadow-2xl border border-gray-100"
+            className="h-112.5 rounded-3xl overflow-hidden shadow-2xl border border-gray-100"
           >
             <iframe
               src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3750.961017316925!2d-43.941071!3d-19.9260475!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x223d422b6a4636ad%3A0x4ea4be78ddb98723!2sCorrea%20%26%20Laia%20Advocacia!5e0!3m2!1spt-BR!2sbr!4v1776091683706!5m2!1spt-BR!2sbr"
