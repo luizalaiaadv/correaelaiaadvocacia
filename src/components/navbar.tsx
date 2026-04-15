@@ -24,6 +24,8 @@ export const Navbar = () => {
     };
 
     cachePositions();
+    // Re-cache após componentes lazy montarem (Suspense pode atrasar o render)
+    const timer = setTimeout(cachePositions, 500);
     window.addEventListener('resize', cachePositions, { passive: true });
 
     const handleScroll = () => {
@@ -43,6 +45,7 @@ export const Navbar = () => {
     handleScroll();
 
     return () => {
+      clearTimeout(timer);
       window.removeEventListener('scroll', handleScroll);
       window.removeEventListener('resize', cachePositions);
     };
