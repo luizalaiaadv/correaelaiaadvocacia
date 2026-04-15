@@ -14,14 +14,23 @@ export const Navbar = () => {
     window.addEventListener('scroll', handleScroll, { passive: true });
 
     // IntersectionObserver evita leitura de offsetTop/offsetHeight no scroll
-    const sectionIds = ['inicio', 'servicos', 'sobre', 'depoimentos', 'faq', 'localizacao'];
+    const sectionIds = [
+      'inicio',
+      'servicos',
+      'sobre',
+      'depoimentos',
+      'faq',
+      'localizacao',
+    ];
     const observers: IntersectionObserver[] = [];
 
     sectionIds.forEach((id) => {
       const el = document.getElementById(id);
       if (!el) return;
       const obs = new IntersectionObserver(
-        ([entry]) => { if (entry.isIntersecting) setActiveSection(id); },
+        ([entry]) => {
+          if (entry.isIntersecting) setActiveSection(id);
+        },
         { threshold: 0.25, rootMargin: '-80px 0px 0px 0px' },
       );
       obs.observe(el);
@@ -59,7 +68,7 @@ export const Navbar = () => {
         <div className="flex items-center gap-2">
           <div className="w-24 h-12 flex items-center justify-center">
             <img
-              src="/logo.png"
+              src="/logo.webp"
               alt="logo"
               width={96}
               height={48}

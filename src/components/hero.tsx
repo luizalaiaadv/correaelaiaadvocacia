@@ -14,7 +14,7 @@ export const Hero = () => {
         <picture>
           <source srcSet="/download.webp" type="image/webp" />
           <img
-            src="/download.png"
+            src="/download.webp"
             alt="Construção Civil"
             className="w-full h-full object-cover object-center"
             referrerPolicy="no-referrer"

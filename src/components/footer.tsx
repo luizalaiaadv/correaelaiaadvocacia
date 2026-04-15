@@ -5,7 +5,7 @@ export const Footer = () => {
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8">
           <div className="flex items-center gap-3">
             <div className="w-20 h-20 flex items-center justify-center">
-              <img src="/logofooter.png" alt="logo" width={96} height={48} />
+              <img src="/logofooter.webp" alt="logo" width={96} height={48} />
             </div>
           </div>
 
