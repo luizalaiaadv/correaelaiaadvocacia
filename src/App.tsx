@@ -19,7 +19,6 @@ import { PricingSection } from './components/pricingsection';
 import { FaqSection } from './components/faqsection';
 import { LocationSection } from './components/locationsection';
 import { Footer } from './components/footer';
-import { FloatingWhatsApp } from './components/floatingwhatsApp';
 
 export default function App() {
   useEffect(() => {
@@ -47,7 +46,6 @@ export default function App() {
         <LocationSection />
       </main>
       <Footer />
-      <FloatingWhatsApp />
     </div>
   );
 }
