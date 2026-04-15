@@ -11,16 +11,19 @@ export const Hero = () => {
     >
       {/* Background Image with Overlay */}
       <div className="absolute inset-0 z-0">
-        <img
-          src="/download.png"
-          alt="Construção Civil"
-          className="w-full h-full object-cover object-center"
-          referrerPolicy="no-referrer"
-          fetchPriority="high"
-          decoding="sync"
-          width={1920}
-          height={1080}
-        />
+        <picture>
+          <source srcSet="/download.webp" type="image/webp" />
+          <img
+            src="/download.png"
+            alt="Construção Civil"
+            className="w-full h-full object-cover object-center"
+            referrerPolicy="no-referrer"
+            fetchPriority="high"
+            decoding="sync"
+            width={1920}
+            height={1080}
+          />
+        </picture>
         <div className="absolute inset-0 bg-linear-to-r from-white via-white/90 to-transparent md:to-transparent" />
       </div>
 
