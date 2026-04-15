@@ -2,9 +2,9 @@ import { FadeIn } from './fade-in';
 
 export const StatsSection = () => {
   const stats = [
-    { label: 'Anos de Atuação', value: '+7' },
-    { label: 'Clientes Ativos', value: '+150' },
-    { label: 'Ações Protocoladas', value: '+300' },
+    { label: 'Anos de Atuação', value: '+13' },
+    { label: 'Clientes Ativos', value: '+300' },
+    { label: 'Ações Protocoladas', value: '+700' },
     { label: 'Avaliações no Google', value: '5.0' },
   ];
 

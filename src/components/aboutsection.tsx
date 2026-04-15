@@ -12,6 +12,10 @@ export const AboutSection = () => {
                 alt="Correa & Laia Advocacia"
                 className="w-full h-full object-cover"
                 referrerPolicy="no-referrer"
+                loading="lazy"
+                decoding="async"
+                width={600}
+                height={750}
               />
             </div>
             <div className="absolute -bottom-24 -left-6 bg-white p-6 rounded-2xl shadow-xl border border-gray-100 max-w-60 hidden sm:block">

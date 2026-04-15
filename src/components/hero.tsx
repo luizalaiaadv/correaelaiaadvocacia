@@ -17,6 +17,9 @@ export const Hero = () => {
           className="w-full h-full object-cover object-center"
           referrerPolicy="no-referrer"
           fetchPriority="high"
+          decoding="sync"
+          width={1920}
+          height={1080}
         />
         <div className="absolute inset-0 bg-linear-to-r from-white via-white/90 to-transparent md:to-transparent" />
       </div>

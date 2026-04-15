@@ -29,6 +29,10 @@ export const GallerySection = () => {
                 alt={`Escritório ${index + 1}`}
                 className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                 referrerPolicy="no-referrer"
+                loading="lazy"
+                decoding="async"
+                width={600}
+                height={600}
               />
             </FadeIn>
           ))}
