@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Menu, X, Phone } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
 import { cn } from '@/src/lib/utils';
 
 export const Navbar = () => {
@@ -9,37 +9,42 @@ export const Navbar = () => {
   const [activeSection, setActiveSection] = useState('inicio');
 
   useEffect(() => {
-    // Scroll apenas para detectar se rolou (sem ler layout = sem forced reflow)
-    const handleScroll = () => setIsScrolled(window.scrollY > 50);
+    const sectionIds = ['inicio', 'servicos', 'sobre', 'depoimentos', 'faq', 'localizacao'];
+
+    // Posições cacheadas fora do scroll handler — sem forced reflow a cada evento
+    let positions: { id: string; top: number }[] = [];
+
+    const cachePositions = () => {
+      positions = sectionIds
+        .map((id) => {
+          const el = document.getElementById(id);
+          return el ? { id, top: el.offsetTop } : null;
+        })
+        .filter(Boolean) as { id: string; top: number }[];
+    };
+
+    cachePositions();
+    window.addEventListener('resize', cachePositions, { passive: true });
+
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 50);
+
+      // Linha de detecção: 90px abaixo do topo (altura da navbar)
+      const trigger = window.scrollY + 90;
+      let current = positions[0]?.id ?? 'inicio';
+      for (const { id, top } of positions) {
+        if (trigger >= top) current = id;
+      }
+      setActiveSection(current);
+    };
+
     window.addEventListener('scroll', handleScroll, { passive: true });
-
-    // IntersectionObserver evita leitura de offsetTop/offsetHeight no scroll
-    const sectionIds = [
-      'inicio',
-      'servicos',
-      'sobre',
-      'depoimentos',
-      'faq',
-      'localizacao',
-    ];
-    const observers: IntersectionObserver[] = [];
-
-    sectionIds.forEach((id) => {
-      const el = document.getElementById(id);
-      if (!el) return;
-      const obs = new IntersectionObserver(
-        ([entry]) => {
-          if (entry.isIntersecting) setActiveSection(id);
-        },
-        { threshold: 0.25, rootMargin: '-80px 0px 0px 0px' },
-      );
-      obs.observe(el);
-      observers.push(obs);
-    });
+    // Inicializa sem esperar o primeiro scroll
+    handleScroll();
 
     return () => {
       window.removeEventListener('scroll', handleScroll);
-      observers.forEach((obs) => obs.disconnect());
+      window.removeEventListener('resize', cachePositions);
     };
   }, []);
 
@@ -51,9 +56,6 @@ export const Navbar = () => {
     { name: 'FAQ', href: '#faq', id: 'faq' },
     { name: 'Localização', href: '#localizacao', id: 'localizacao' },
   ];
-
-  const whatsappUrl =
-    'https://wa.me/5531999471983?text=Olá,%20gostaria%20de%20agendar%20uma%20consultoria.';
 
   return (
     <nav
@@ -128,12 +130,19 @@ export const Navbar = () => {
                   href={link.href}
                   onClick={() => setIsMobileMenuOpen(false)}
                   className={cn(
-                    'font-medium transition-colors py-2 border-l-4 pl-4',
+                    'relative font-medium transition-colors py-2 pl-4',
                     activeSection === link.id
-                      ? 'text-primary border-primary bg-primary/5'
-                      : 'text-brand border-transparent',
+                      ? 'text-primary bg-primary/5'
+                      : 'text-brand',
                   )}
                 >
+                  {activeSection === link.id && (
+                    <motion.div
+                      layoutId="activeNavMobile"
+                      className="absolute left-0 top-0 bottom-0 w-1 bg-primary rounded-r"
+                      transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                    />
+                  )}
                   {link.name}
                 </a>
               ))}
