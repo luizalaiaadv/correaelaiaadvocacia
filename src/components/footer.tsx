@@ -18,7 +18,7 @@ export const Footer = () => {
         </div>
       </div>
 
-      <div className="bg-[#fafafa] py-8 px-6 text-brand/60 text-[10px] md:text-xs leading-relaxed">
+      <div className="bg-[#fafafa] py-8 px-6 text-brand/80 text-[10px] md:text-xs leading-relaxed">
         <div className="max-w-4xl mx-auto text-center space-y-2">
           <p>
             Este site não faz parte do Google nem do Facebook ou do Facebook

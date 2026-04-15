@@ -9,35 +9,29 @@ export const Navbar = () => {
   const [activeSection, setActiveSection] = useState('inicio');
 
   useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 50);
-
-      // Active section detection
-      const sections = [
-        'inicio',
-        'servicos',
-        'sobre',
-        'depoimentos',
-        'faq',
-        'localizacao',
-      ];
-      const scrollPosition = window.scrollY + 100;
-
-      for (const section of sections) {
-        const element = document.getElementById(section);
-        if (element) {
-          const { offsetTop, offsetHeight } = element;
-          if (
-            scrollPosition >= offsetTop &&
-            scrollPosition < offsetTop + offsetHeight
-          ) {
-            setActiveSection(section);
-          }
-        }
-      }
-    };
+    // Scroll apenas para detectar se rolou (sem ler layout = sem forced reflow)
+    const handleScroll = () => setIsScrolled(window.scrollY > 50);
     window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
+
+    // IntersectionObserver evita leitura de offsetTop/offsetHeight no scroll
+    const sectionIds = ['inicio', 'servicos', 'sobre', 'depoimentos', 'faq', 'localizacao'];
+    const observers: IntersectionObserver[] = [];
+
+    sectionIds.forEach((id) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      const obs = new IntersectionObserver(
+        ([entry]) => { if (entry.isIntersecting) setActiveSection(id); },
+        { threshold: 0.25, rootMargin: '-80px 0px 0px 0px' },
+      );
+      obs.observe(el);
+      observers.push(obs);
+    });
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      observers.forEach((obs) => obs.disconnect());
+    };
   }, []);
 
   const navLinks = [

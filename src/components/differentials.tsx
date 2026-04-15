@@ -63,6 +63,10 @@ export const Differentials = () => {
               alt="Diferenciais Correa & Laia"
               className="w-full h-full object-cover"
               referrerPolicy="no-referrer"
+              loading="lazy"
+              decoding="async"
+              width={800}
+              height={800}
             />
             <div className="absolute inset-0 bg-primary/10 mix-blend-multiply" />
           </div>
