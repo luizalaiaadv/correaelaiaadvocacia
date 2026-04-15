@@ -8,7 +8,7 @@ export const AboutSection = () => {
           <div className="relative max-w-md mx-auto lg:mx-0">
             <div className="rounded-3xl overflow-hidden shadow-2xl aspect-4/5">
               <img
-                src="/luizas.jpg"
+                src="/luizas.webp"
                 alt="Correa & Laia Advocacia"
                 className="w-full h-full object-cover"
                 referrerPolicy="no-referrer"

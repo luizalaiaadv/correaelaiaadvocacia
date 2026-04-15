@@ -59,7 +59,7 @@ export const Differentials = () => {
         <FadeIn delay={0.4} className="relative">
           <div className="relative rounded-3xl overflow-hidden aspect-square lg:aspect-auto lg:h-112.5 max-w-md mx-auto lg:ml-auto">
             <img
-              src="/img3.jpg"
+              src="/img3.webp"
               alt="Diferenciais Correa & Laia"
               className="w-full h-full object-cover"
               referrerPolicy="no-referrer"

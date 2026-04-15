@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls -la public/*.jpg public/*.png)",
+      "Bash(npx sharp-cli:*)"
+    ]
+  }
+}
