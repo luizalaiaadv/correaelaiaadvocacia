@@ -2,7 +2,9 @@
   "permissions": {
     "allow": [
       "Bash(ls -la public/*.jpg public/*.png)",
-      "Bash(npx sharp-cli:*)"
+      "Bash(npx sharp-cli:*)",
+      "Bash(npm run *)",
+      "Bash(npx kill-port *)"
     ]
   }
 }
