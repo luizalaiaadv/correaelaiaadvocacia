@@ -6,6 +6,7 @@ import { Menu, X } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
+import imgLogo from '@/public/logo.webp';
 
 export const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -80,14 +81,12 @@ export const Navbar = () => {
     >
       <div className="max-w-7xl mx-auto flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className="w-24 h-12 flex items-center justify-center relative">
+          <div className="flex items-center justify-center">
             <Image
-              src="/logo.webp"
+              src={imgLogo}
               alt="Correa & Laia Advocacia"
-              width={96}
-              height={48}
               priority
-              className="object-contain w-24 h-auto"
+              style={{ width: '96px', height: 'auto' }}
             />
           </div>
         </div>

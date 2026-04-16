@@ -12,6 +12,7 @@ import { PricingSection } from '@/app/components/pricingsection';
 import { FaqSection } from '@/app/components/faqsection';
 import { LocationSection } from '@/app/components/locationsection';
 import { Footer } from '@/app/components/footer';
+import Typebot from '@/app/components/typebot';
 
 export default function Home() {
   return (
@@ -32,6 +33,7 @@ export default function Home() {
         <LocationSection />
       </main>
       <Footer />
+      <Typebot />
     </div>
   );
 }
