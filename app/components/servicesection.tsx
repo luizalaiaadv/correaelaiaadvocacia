@@ -106,6 +106,7 @@ export const ServicesSection = () => {
                     scale: 1,
                     boxShadow:
                       '0 4px 6px -1px rgb(0 0 0 / 0.4), 0 2px 4px -2px rgb(0 0 0 / 0.4)',
+                    borderColor: 'rgba(243, 244, 246, 1)',
                   },
                   hover: {
                     y: -12,
