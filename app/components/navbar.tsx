@@ -86,7 +86,7 @@ export const Navbar = () => {
               src={imgLogo}
               alt="Correa & Laia Advocacia"
               priority
-              style={{ width: '96px', height: 'auto' }}
+              style={{ width: '76px', height: 'auto' }}
             />
           </div>
         </div>
