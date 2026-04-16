@@ -1,0 +1,28 @@
+[build]
+  publish = "dist"
+  command = "npm run build"
+
+# Redireciona não-www para www (domínio canônico)
+# O Netlify processa estes redirects no edge — sem RTT extra para o servidor de origem
+[[redirects]]
+  from = "https://correaelaiaadvocacia.com/*"
+  to   = "https://www.correaelaiaadvocacia.com/:splat"
+  status = 301
+  force  = true
+
+# HTTP → HTTPS (sem www)
+[[redirects]]
+  from = "http://correaelaiaadvocacia.com/*"
+  to   = "https://www.correaelaiaadvocacia.com/:splat"
+  status = 301
+  force  = true
+
+# HTTP → HTTPS (com www)
+[[redirects]]
+  from = "http://www.correaelaiaadvocacia.com/*"
+  to   = "https://www.correaelaiaadvocacia.com/:splat"
+  status = 301
+  force  = true
+
+[build.environment]
+  NODE_VERSION = "20"
