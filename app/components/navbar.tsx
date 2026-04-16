@@ -13,7 +13,14 @@ export const Navbar = () => {
   const [activeSection, setActiveSection] = useState('inicio');
 
   useEffect(() => {
-    const sectionIds = ['inicio', 'servicos', 'sobre', 'depoimentos', 'faq', 'localizacao'];
+    const sectionIds = [
+      'inicio',
+      'servicos',
+      'sobre',
+      'depoimentos',
+      'faq',
+      'localizacao',
+    ];
 
     let positions: { id: string; top: number }[] = [];
 
@@ -145,7 +152,11 @@ export const Navbar = () => {
                     <motion.div
                       layoutId="activeNavMobile"
                       className="absolute left-0 top-0 bottom-0 w-1 bg-primary rounded-r"
-                      transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                      transition={{
+                        type: 'spring',
+                        stiffness: 380,
+                        damping: 30,
+                      }}
                     />
                   )}
                   {link.name}
