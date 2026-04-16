@@ -1,7 +1,11 @@
+'use client';
+
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Menu, X } from 'lucide-react';
-import { cn } from '@/src/lib/utils';
+import Link from 'next/link';
+import Image from 'next/image';
+import { cn } from '@/lib/utils';
 
 export const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -14,8 +18,6 @@ export const Navbar = () => {
     let positions: { id: string; top: number }[] = [];
 
     const cachePositions = () => {
-      // getBoundingClientRect + scrollY dá posição absoluta no documento,
-      // independente do offsetParent — funciona com seções lazy e layouts aninhados
       positions = sectionIds
         .map((id) => {
           const el = document.getElementById(id);
@@ -27,15 +29,12 @@ export const Navbar = () => {
 
     cachePositions();
 
-    // ResizeObserver no body: re-cacheia sempre que seções lazy montam e
-    // aumentam a altura do documento (mais confiável que setTimeout fixo)
     const ro = new ResizeObserver(cachePositions);
     ro.observe(document.body);
     window.addEventListener('resize', cachePositions, { passive: true });
 
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 50);
-
       const trigger = window.scrollY + 90;
       let current = positions[0]?.id ?? 'inicio';
       for (const { id, top } of positions) {
@@ -74,14 +73,14 @@ export const Navbar = () => {
     >
       <div className="max-w-7xl mx-auto flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className="w-24 h-12 flex items-center justify-center">
-            <img
+          <div className="w-24 h-12 flex items-center justify-center relative">
+            <Image
               src="/logo.webp"
-              alt="logo"
+              alt="Correa & Laia Advocacia"
               width={96}
               height={48}
-              fetchPriority="high"
-              decoding="sync"
+              priority
+              className="object-contain"
             />
           </div>
         </div>
@@ -89,7 +88,7 @@ export const Navbar = () => {
         {/* Desktop Menu */}
         <div className="hidden md:flex items-center gap-8">
           {navLinks.map((link) => (
-            <a
+            <Link
               key={link.name}
               href={link.href}
               className={cn(
@@ -105,7 +104,7 @@ export const Navbar = () => {
                   transition={{ type: 'spring', stiffness: 380, damping: 30 }}
                 />
               )}
-            </a>
+            </Link>
           ))}
         </div>
 
@@ -131,7 +130,7 @@ export const Navbar = () => {
           >
             <div className="flex flex-col p-6 gap-4">
               {navLinks.map((link) => (
-                <a
+                <Link
                   key={link.name}
                   href={link.href}
                   onClick={() => setIsMobileMenuOpen(false)}
@@ -150,7 +149,7 @@ export const Navbar = () => {
                     />
                   )}
                   {link.name}
-                </a>
+                </Link>
               ))}
             </div>
           </motion.div>

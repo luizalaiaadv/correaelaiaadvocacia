@@ -1,12 +1,12 @@
 import { CheckCircle2, Users, Award, ShieldCheck } from 'lucide-react';
+import Image from 'next/image';
 import { FadeIn } from './fade-in';
 
 export const Differentials = () => {
   const items = [
     {
       title: 'Atendimento Humanizado',
-      description:
-        'Entendemos que cada caso é único e envolve vidas e famílias.',
+      description: 'Entendemos que cada caso é único e envolve vidas e famílias.',
       icon: Users,
     },
     {
@@ -16,14 +16,12 @@ export const Differentials = () => {
     },
     {
       title: 'Especialistas Focados',
-      description:
-        'Foco exclusivo em Direito do Trabalho para melhores resultados.',
+      description: 'Foco exclusivo em Direito do Trabalho para melhores resultados.',
       icon: Award,
     },
     {
       title: 'Agilidade Digital',
-      description:
-        'Processos e comunicações rápidas via WhatsApp e meios digitais.',
+      description: 'Processos e comunicações rápidas via WhatsApp e meios digitais.',
       icon: CheckCircle2,
     },
   ];
@@ -48,9 +46,7 @@ export const Differentials = () => {
                   <item.icon size={24} />
                 </div>
                 <h4 className="text-lg font-bold text-brand">{item.title}</h4>
-                <p className="text-brand/60 text-sm leading-relaxed">
-                  {item.description}
-                </p>
+                <p className="text-brand/60 text-sm leading-relaxed">{item.description}</p>
               </FadeIn>
             ))}
           </div>
@@ -58,15 +54,12 @@ export const Differentials = () => {
 
         <FadeIn delay={0.4} className="relative">
           <div className="relative rounded-3xl overflow-hidden aspect-square lg:aspect-auto lg:h-112.5 max-w-md mx-auto lg:ml-auto">
-            <img
+            <Image
               src="/img3.webp"
               alt="Diferenciais Correa & Laia"
-              className="w-full h-full object-cover"
-              referrerPolicy="no-referrer"
-              loading="lazy"
-              decoding="async"
-              width={800}
-              height={800}
+              fill
+              className="object-cover"
+              sizes="(max-width: 1024px) 100vw, 50vw"
             />
             <div className="absolute inset-0 bg-primary/10 mix-blend-multiply" />
           </div>

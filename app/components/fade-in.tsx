@@ -1,3 +1,5 @@
+'use client';
+
 import React from 'react';
 import { motion } from 'motion/react';
 
@@ -7,7 +9,6 @@ interface FadeInProps {
   y?: number;
   x?: number;
   className?: string;
-  key?: React.Key;
 }
 
 export const FadeIn = ({ children, delay = 0, y = 20, x = 0, className }: FadeInProps) => (

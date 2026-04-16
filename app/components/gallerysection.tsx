@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import { FadeIn } from './fade-in';
 
 export const GallerySection = () => {
@@ -8,12 +9,8 @@ export const GallerySection = () => {
       <div className="max-w-7xl mx-auto px-6">
         <div className="text-center max-w-2xl mx-auto mb-16">
           <FadeIn>
-            <h2 className="text-sm font-bold text-primary uppercase tracking-[0.3em]">
-              Ambiente
-            </h2>
-            <h3 className="text-4xl md:text-5xl font-bold text-brand mt-4">
-              NOSSO ESCRITÓRIO
-            </h3>
+            <h2 className="text-sm font-bold text-primary uppercase tracking-[0.3em]">Ambiente</h2>
+            <h3 className="text-4xl md:text-5xl font-bold text-brand mt-4">NOSSO ESCRITÓRIO</h3>
           </FadeIn>
         </div>
 
@@ -22,17 +19,14 @@ export const GallerySection = () => {
             <FadeIn
               key={index}
               delay={index * 0.1}
-              className="overflow-hidden rounded-2xl aspect-square group"
+              className="relative overflow-hidden rounded-2xl aspect-square group"
             >
-              <img
+              <Image
                 src={src}
                 alt={`Escritório ${index + 1}`}
-                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                referrerPolicy="no-referrer"
-                loading="lazy"
-                decoding="async"
-                width={600}
-                height={600}
+                fill
+                className="object-cover transition-transform duration-700 group-hover:scale-110"
+                sizes="(max-width: 768px) 50vw, 25vw"
               />
             </FadeIn>
           ))}

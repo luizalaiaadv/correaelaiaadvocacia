@@ -1,9 +1,7 @@
+import Image from 'next/image';
 import { FadeIn } from './fade-in';
 
 export const Hero = () => {
-  const whatsappUrl =
-    'https://wa.me/5531999471983?text=Olá,%20gostaria%20de%20agendar%20uma%20consultoria.';
-
   return (
     <section
       id="inicio"
@@ -11,14 +9,14 @@ export const Hero = () => {
     >
       {/* Background Image with Overlay */}
       <div className="absolute inset-0 z-0">
-        <img
+        <Image
           src="/download.webp"
           alt="Construção Civil"
-          className="w-full h-full object-cover object-center"
-          fetchPriority="high"
-          decoding="sync"
-          width={1920}
-          height={1080}
+          fill
+          priority
+          quality={85}
+          className="object-cover object-center"
+          sizes="100vw"
         />
         <div className="absolute inset-0 bg-linear-to-r from-white via-white/90 to-transparent md:to-transparent" />
       </div>
