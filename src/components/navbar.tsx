@@ -11,27 +11,31 @@ export const Navbar = () => {
   useEffect(() => {
     const sectionIds = ['inicio', 'servicos', 'sobre', 'depoimentos', 'faq', 'localizacao'];
 
-    // Posições cacheadas fora do scroll handler — sem forced reflow a cada evento
     let positions: { id: string; top: number }[] = [];
 
     const cachePositions = () => {
+      // getBoundingClientRect + scrollY dá posição absoluta no documento,
+      // independente do offsetParent — funciona com seções lazy e layouts aninhados
       positions = sectionIds
         .map((id) => {
           const el = document.getElementById(id);
-          return el ? { id, top: el.offsetTop } : null;
+          if (!el) return null;
+          return { id, top: el.getBoundingClientRect().top + window.scrollY };
         })
         .filter(Boolean) as { id: string; top: number }[];
     };
 
     cachePositions();
-    // Re-cache após componentes lazy montarem (Suspense pode atrasar o render)
-    const timer = setTimeout(cachePositions, 500);
+
+    // ResizeObserver no body: re-cacheia sempre que seções lazy montam e
+    // aumentam a altura do documento (mais confiável que setTimeout fixo)
+    const ro = new ResizeObserver(cachePositions);
+    ro.observe(document.body);
     window.addEventListener('resize', cachePositions, { passive: true });
 
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 50);
 
-      // Linha de detecção: 90px abaixo do topo (altura da navbar)
       const trigger = window.scrollY + 90;
       let current = positions[0]?.id ?? 'inicio';
       for (const { id, top } of positions) {
@@ -41,11 +45,10 @@ export const Navbar = () => {
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
-    // Inicializa sem esperar o primeiro scroll
     handleScroll();
 
     return () => {
-      clearTimeout(timer);
+      ro.disconnect();
       window.removeEventListener('scroll', handleScroll);
       window.removeEventListener('resize', cachePositions);
     };
