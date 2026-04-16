@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@google/genai": "^1.29.0",
+    "@typebot.io/react": "^0.10.2",
     "@vercel/analytics": "^2.0.1",
     "clsx": "^2.1.1",
     "dotenv": "^17.2.3",

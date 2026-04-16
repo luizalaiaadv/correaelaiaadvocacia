@@ -1,4 +1,5 @@
 import Image from 'next/image';
+import imgLogoFooter from '@/public/logofooter.webp';
 
 export const Footer = () => {
   return (
@@ -8,7 +9,7 @@ export const Footer = () => {
           <div className="flex items-center gap-3">
             <div className="relative w-20 h-20 flex items-center justify-center">
               <Image
-                src="/logofooter.webp"
+                src={imgLogoFooter}
                 alt="Correa & Laia Advocacia"
                 width={96}
                 height={48}

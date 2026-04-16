@@ -16,6 +16,7 @@ export const Hero = () => {
           priority
           quality={85}
           className="object-cover object-center"
+          fetchPriority="high"
           sizes="100vw"
         />
         <div className="absolute inset-0 bg-linear-to-r from-white via-white/90 to-transparent md:to-transparent" />
