@@ -80,7 +80,7 @@ export const Navbar = () => {
               width={96}
               height={48}
               priority
-              className="object-contain"
+              className="object-contain w-24 h-auto"
             />
           </div>
         </div>
