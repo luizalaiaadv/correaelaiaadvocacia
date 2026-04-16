@@ -61,7 +61,9 @@ export const FaqSection = () => {
       <div className="max-w-3xl mx-auto px-6">
         <div className="text-center mb-16">
           <FadeIn>
-            <h2 className="text-sm font-bold text-primary uppercase tracking-[0.3em]">Dúvidas</h2>
+            <h2 className="text-sm font-bold text-primary uppercase tracking-[0.3em]">
+              Dúvidas
+            </h2>
             <h3 className="text-4xl md:text-5xl font-bold text-brand mt-4">
               PERGUNTAS FREQUENTES
             </h3>
@@ -73,7 +75,9 @@ export const FaqSection = () => {
             <FadeIn key={index} delay={index * 0.05}>
               <div className="border border-gray-100 bg-white rounded-2xl overflow-hidden shadow-xl/20">
                 <button
-                  onClick={() => setActiveIndex(activeIndex === index ? null : index)}
+                  onClick={() =>
+                    setActiveIndex(activeIndex === index ? null : index)
+                  }
                   className="w-full p-6 text-left flex justify-between items-center gap-4 hover:bg-gray-50 transition-colors"
                 >
                   <span className="font-bold text-brand">{faq.question}</span>

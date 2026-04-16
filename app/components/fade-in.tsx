@@ -11,7 +11,13 @@ interface FadeInProps {
   className?: string;
 }
 
-export const FadeIn = ({ children, delay = 0, y = 20, x = 0, className }: FadeInProps) => (
+export const FadeIn = ({
+  children,
+  delay = 0,
+  y = 20,
+  x = 0,
+  className,
+}: FadeInProps) => (
   <motion.div
     initial={{ opacity: 0, y, x }}
     whileInView={{ opacity: 1, y: 0, x: 0 }}

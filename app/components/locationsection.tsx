@@ -12,7 +12,9 @@ export const LocationSection = () => {
               <h2 className="text-sm font-bold text-primary uppercase tracking-[0.3em]">
                 Onde Estamos
               </h2>
-              <h3 className="text-4xl md:text-5xl font-bold text-brand mt-4">VENHA NOS VISITAR</h3>
+              <h3 className="text-4xl md:text-5xl font-bold text-brand mt-4">
+                VENHA NOS VISITAR
+              </h3>
             </FadeIn>
 
             <div className="space-y-8">

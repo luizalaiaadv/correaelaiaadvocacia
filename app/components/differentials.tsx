@@ -6,7 +6,8 @@ export const Differentials = () => {
   const items = [
     {
       title: 'Atendimento Humanizado',
-      description: 'Entendemos que cada caso é único e envolve vidas e famílias.',
+      description:
+        'Entendemos que cada caso é único e envolve vidas e famílias.',
       icon: Users,
     },
     {
@@ -16,12 +17,14 @@ export const Differentials = () => {
     },
     {
       title: 'Especialistas Focados',
-      description: 'Foco exclusivo em Direito do Trabalho para melhores resultados.',
+      description:
+        'Foco exclusivo em Direito do Trabalho para melhores resultados.',
       icon: Award,
     },
     {
       title: 'Agilidade Digital',
-      description: 'Processos e comunicações rápidas via WhatsApp e meios digitais.',
+      description:
+        'Processos e comunicações rápidas via WhatsApp e meios digitais.',
       icon: CheckCircle2,
     },
   ];
@@ -46,7 +49,9 @@ export const Differentials = () => {
                   <item.icon size={24} />
                 </div>
                 <h4 className="text-lg font-bold text-brand">{item.title}</h4>
-                <p className="text-brand/60 text-sm leading-relaxed">{item.description}</p>
+                <p className="text-brand/60 text-sm leading-relaxed">
+                  {item.description}
+                </p>
               </FadeIn>
             ))}
           </div>
