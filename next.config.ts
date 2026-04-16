@@ -12,6 +12,9 @@ const config: NextConfig = {
     formats: ['image/avif', 'image/webp'],
     qualities: [75, 85],
   },
+  experimental: {
+    optimizePackageImports: ['motion', 'lucide-react', '@typebot.io/react'],
+  },
 };
 
 export default config;

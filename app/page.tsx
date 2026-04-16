@@ -12,7 +12,11 @@ import { PricingSection } from '@/app/components/pricingsection';
 import { FaqSection } from '@/app/components/faqsection';
 import { LocationSection } from '@/app/components/locationsection';
 import { Footer } from '@/app/components/footer';
-import TypebotBubble from '@/app/components/typebotbubble';
+import dynamic from 'next/dynamic';
+
+const TypebotBubble = dynamic(() => import('@/app/components/typebotbubble'), {
+  ssr: false,
+});
 
 export default function Home() {
   return (

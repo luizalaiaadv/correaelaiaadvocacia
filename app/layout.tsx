@@ -60,6 +60,15 @@ export default function RootLayout({
 }) {
   return (
     <html lang="pt-BR" className={`${cinzel.variable} ${montserrat.variable}`}>
+      <head>
+        <link rel="preconnect" href="https://www.googletagmanager.com" />
+        <link rel="preconnect" href="https://typebot.io" />
+        <link
+          rel="preconnect"
+          href="https://lh3.googleusercontent.com"
+          crossOrigin="anonymous"
+        />
+      </head>
       <body>
         <noscript>
           <iframe
