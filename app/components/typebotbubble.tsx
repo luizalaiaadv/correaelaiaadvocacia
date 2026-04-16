@@ -2,7 +2,7 @@
 
 import { Bubble } from '@typebot.io/react';
 
-export default function Typebot() {
+export default function TypebotBubble() {
   return (
     <Bubble
       typebot="correia-e-laia-lp-trabalhista-a-b-kb9c7vg"
