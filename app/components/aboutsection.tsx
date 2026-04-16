@@ -18,10 +18,12 @@ export const AboutSection = () => {
             </div>
             <div className="absolute -bottom-24 -left-6 bg-white p-6 rounded-2xl shadow-xl border border-gray-100 max-w-60 hidden sm:block">
               <p className="text-xs italic text-brand/70 leading-relaxed">
-                "Nossa missão é transformar o Direito do Trabalho em uma ferramenta de justiça real
-                para o trabalhador brasileiro."
+                "Nossa missão é transformar o Direito do Trabalho em uma
+                ferramenta de justiça real para o trabalhador brasileiro."
               </p>
-              <div className="mt-3 font-bold text-primary text-sm">— Correa & Laia Advocacia</div>
+              <div className="mt-3 font-bold text-primary text-sm">
+                — Correa & Laia Advocacia
+              </div>
             </div>
           </div>
         </FadeIn>
@@ -37,21 +39,27 @@ export const AboutSection = () => {
             <p className="text-primary font-semibold mt-2">OAB/MG 212.802</p>
           </FadeIn>
 
-          <FadeIn delay={0.2} className="space-y-6 text-brand/70 leading-relaxed">
+          <FadeIn
+            delay={0.2}
+            className="space-y-6 text-brand/70 leading-relaxed"
+          >
             <p>
-              Dra. Luiza Laia é graduada em Direito pela Pontificia Universidade Católica de Minas
-              Gerais – PUC Minas – em 2020 e Pós Graduada em Direito Processual Trabalhista pela
-              ESA/OAB. Possui grande experiência na área do direito trabalhista e privado através de
+              Dra. Luiza Laia é graduada em Direito pela Pontificia Universidade
+              Católica de Minas Gerais – PUC Minas – em 2020 e Pós Graduada em
+              Direito Processual Trabalhista pela ESA/OAB. Possui grande
+              experiência na área do direito trabalhista e privado através de
               uma advocacia artesanal, visando uma justiça efetiva e rápida.
             </p>
             <p>
-              Dra. Luiza Corrêa é graduada em Direito pela Universidade Salgado de Oliveira – em
-              2013 e Pós-Graduanda em Holding e Proteção Patrimônio – Família e Empresa. Possui
-              experiência em Direito Cívil na área de Contratos e Sucessões.
+              Dra. Luiza Corrêa é graduada em Direito pela Universidade Salgado
+              de Oliveira – em 2013 e Pós-Graduanda em Holding e Proteção
+              Patrimônio – Família e Empresa. Possui experiência em Direito
+              Cívil na área de Contratos e Sucessões.
             </p>
             <p>
-              Juntas, construímos um escritório pautado pela excelência, ética e respeito, pronto
-              para oferecer soluções jurídicas que fazem a diferença.
+              Juntas, construímos um escritório pautado pela excelência, ética e
+              respeito, pronto para oferecer soluções jurídicas que fazem a
+              diferença.
             </p>
           </FadeIn>
         </div>

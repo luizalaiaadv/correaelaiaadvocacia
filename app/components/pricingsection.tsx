@@ -14,9 +14,9 @@ export const PricingSection = () => {
             VAMOS AGENDAR SEU ATENDIMENTO?
           </h2>
           <p className="text-lg md:text-xl opacity-90 mb-12 leading-relaxed">
-            Estamos aqui para simplificar sua jornada e encontrar a melhor solução para o seu caso.
-            Nossa equipe oferece atendimento humanizado e eficiente, sempre respeitando sua
-            individualidade.
+            Estamos aqui para simplificar sua jornada e encontrar a melhor
+            solução para o seu caso. Nossa equipe oferece atendimento humanizado
+            e eficiente, sempre respeitando sua individualidade.
           </p>
           <div className="space-y-6">
             <p className="text-sm opacity-70 italic">

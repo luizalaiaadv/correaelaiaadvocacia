@@ -18,7 +18,8 @@ export const Footer = () => {
           </div>
 
           <div className="text-xs opacity-80 tracking-wider text-center md:text-right">
-            © {new Date().getFullYear()} Correa & Laia Advocacia. Todos os direitos reservados.
+            © {new Date().getFullYear()} Correa & Laia Advocacia. Todos os
+            direitos reservados.
             <br />
             Desenvolvido com excelência jurídica.
           </div>
@@ -28,9 +29,10 @@ export const Footer = () => {
       <div className="bg-[#fafafa] py-8 px-6 text-brand/80 text-[10px] md:text-xs leading-relaxed">
         <div className="max-w-4xl mx-auto text-center space-y-2">
           <p>
-            Este site não faz parte do Google nem do Facebook ou do Facebook Inc. Além disso, não
-            oferecemos nenhum tipo de serviço oficial do governo, NÃO praticamos fraude, não somos
-            uma empresa que vende criptoativos ou qualquer outro serviço.
+            Este site não faz parte do Google nem do Facebook ou do Facebook
+            Inc. Além disso, não oferecemos nenhum tipo de serviço oficial do
+            governo, NÃO praticamos fraude, não somos uma empresa que vende
+            criptoativos ou qualquer outro serviço.
           </p>
           <p className="font-semibold">
             Essa empresa trabalha exclusivamente com serviços jurídicos.

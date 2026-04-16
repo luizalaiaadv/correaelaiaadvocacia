@@ -35,7 +35,9 @@ export const Testimonials = () => {
       <div className="max-w-7xl mx-auto px-6">
         <div className="text-center max-w-2xl mx-auto mb-20">
           <FadeIn>
-            <h2 className="text-sm font-bold text-primary uppercase tracking-[0.3em]">Feedbacks</h2>
+            <h2 className="text-sm font-bold text-primary uppercase tracking-[0.3em]">
+              Feedbacks
+            </h2>
             <h3 className="text-4xl md:text-5xl font-bold text-brand mt-4">
               O QUE DIZEM NOSSOS CLIENTES
             </h3>
@@ -55,11 +57,17 @@ export const Testimonials = () => {
 
               <div className="flex gap-1 mb-6">
                 {[...Array(5)].map((_, i) => (
-                  <Star key={i} size={16} className="fill-yellow-400 text-yellow-400" />
+                  <Star
+                    key={i}
+                    size={16}
+                    className="fill-yellow-400 text-yellow-400"
+                  />
                 ))}
               </div>
 
-              <p className="text-brand/70 italic leading-relaxed mb-8">"{item.text}"</p>
+              <p className="text-brand/70 italic leading-relaxed mb-8">
+                "{item.text}"
+              </p>
 
               <div className="flex items-center gap-4">
                 <div className="relative w-12 h-12 rounded-full overflow-hidden grayscale group-hover:grayscale-0 transition-all">
@@ -83,7 +91,10 @@ export const Testimonials = () => {
                       target="_blank"
                       rel="noopener noreferrer"
                     >
-                      <ExternalLinkIcon size={16} className="inline-block text-primary mt-1" />
+                      <ExternalLinkIcon
+                        size={16}
+                        className="inline-block text-primary mt-1"
+                      />
                     </a>
                   </div>
                 </div>

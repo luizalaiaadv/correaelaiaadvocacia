@@ -18,47 +18,56 @@ export const ServicesSection = () => {
   const services = [
     {
       title: 'Pejotização / Vínculo Empregatício',
-      description: 'Reconhecimento de vínculo para quem trabalha como PJ mas possui subordinação.',
+      description:
+        'Reconhecimento de vínculo para quem trabalha como PJ mas possui subordinação.',
       icon: UserPlus,
     },
     {
       title: 'Cálculo de Verbas Rescisórias',
-      description: 'Análise detalhada se todos os seus direitos foram pagos na demissão.',
+      description:
+        'Análise detalhada se todos os seus direitos foram pagos na demissão.',
       icon: FileText,
     },
     {
       title: 'Aviso Prévio / Demissão',
-      description: 'Orientação completa sobre demissões sem justa causa ou pedidos de demissão.',
+      description:
+        'Orientação completa sobre demissões sem justa causa ou pedidos de demissão.',
       icon: Briefcase,
     },
     {
       title: 'Acúmulo e Desvio de Função',
-      description: 'Se você faz mais do que foi contratado, tem direito a compensação.',
+      description:
+        'Se você faz mais do que foi contratado, tem direito a compensação.',
       icon: TrendingUp,
     },
     {
       title: 'Rescisão Indireta / Indevida',
-      description: 'Quando a empresa descumpre o contrato, você pode pedir demissão com direitos.',
+      description:
+        'Quando a empresa descumpre o contrato, você pode pedir demissão com direitos.',
       icon: ShieldAlert,
     },
     {
       title: 'Assédio Moral e Sexual',
-      description: 'Defesa rigorosa contra abusos e situações constrangedoras no trabalho.',
+      description:
+        'Defesa rigorosa contra abusos e situações constrangedoras no trabalho.',
       icon: AlertCircle,
     },
     {
       title: 'Horas Extras Não Pagas',
-      description: 'Recuperação de valores não pagos por trabalho além da jornada.',
+      description:
+        'Recuperação de valores não pagos por trabalho além da jornada.',
       icon: Clock,
     },
     {
       title: 'FGTS e Verbas Rescisórias',
-      description: 'Regularização de depósitos e pagamentos obrigatórios em atraso.',
+      description:
+        'Regularização de depósitos e pagamentos obrigatórios em atraso.',
       icon: Scale,
     },
     {
       title: 'Acidente de Trabalho',
-      description: 'Indenizações e auxílio para doenças ocupacionais ou acidentes.',
+      description:
+        'Indenizações e auxílio para doenças ocupacionais ou acidentes.',
       icon: Stethoscope,
     },
   ];
@@ -73,11 +82,14 @@ export const ServicesSection = () => {
             </h2>
           </FadeIn>
           <FadeIn delay={0.2}>
-            <h3 className="text-4xl md:text-5xl font-bold text-brand">COMO PODEMOS TE AJUDAR?</h3>
+            <h3 className="text-4xl md:text-5xl font-bold text-brand">
+              COMO PODEMOS TE AJUDAR?
+            </h3>
           </FadeIn>
           <FadeIn delay={0.4}>
             <p className="text-brand/60">
-              Especialistas prontos para defender seus direitos com excelência e dedicação.
+              Especialistas prontos para defender seus direitos com excelência e
+              dedicação.
             </p>
           </FadeIn>
         </div>
@@ -92,7 +104,8 @@ export const ServicesSection = () => {
                   initial: {
                     y: 0,
                     scale: 1,
-                    boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.4), 0 2px 4px -2px rgb(0 0 0 / 0.4)',
+                    boxShadow:
+                      '0 4px 6px -1px rgb(0 0 0 / 0.4), 0 2px 4px -2px rgb(0 0 0 / 0.4)',
                   },
                   hover: {
                     y: -12,
@@ -113,8 +126,12 @@ export const ServicesSection = () => {
                 >
                   <service.icon size={28} />
                 </motion.div>
-                <h4 className="text-xl font-bold text-brand mb-3 leading-tight">{service.title}</h4>
-                <p className="text-brand/60 text-sm leading-relaxed">{service.description}</p>
+                <h4 className="text-xl font-bold text-brand mb-3 leading-tight">
+                  {service.title}
+                </h4>
+                <p className="text-brand/60 text-sm leading-relaxed">
+                  {service.description}
+                </p>
               </motion.div>
             </FadeIn>
           ))}
