@@ -1,8 +1,0 @@
-# Netlify _redirects — processado no edge CDN, sem custo de RTT
-
-# Não-www → www (canônico)
-https://correaelaiaadvocacia.com/*  https://www.correaelaiaadvocacia.com/:splat  301!
-
-# HTTP → HTTPS
-http://correaelaiaadvocacia.com/*   https://www.correaelaiaadvocacia.com/:splat  301!
-http://www.correaelaiaadvocacia.com/* https://www.correaelaiaadvocacia.com/:splat 301!
