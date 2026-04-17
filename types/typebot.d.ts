@@ -13,6 +13,7 @@ declare module '@typebot.io/react' {
       button?: {
         backgroundColor?: string;
         size?: 'small' | 'medium' | 'large';
+        borderRadius?: string;
       };
       previewMessage?: {
         backgroundColor?: string;

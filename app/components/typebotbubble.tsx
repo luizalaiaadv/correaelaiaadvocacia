@@ -13,7 +13,7 @@ export default function TypebotBubble() {
           autoShowDelay: 1000,
         }}
         theme={{
-          button: { backgroundColor: '#26d466', size: 'large' },
+          button: { backgroundColor: '#26d466', size: 'large', borderRadius: '9999px' },
           previewMessage: {
             backgroundColor: '#26d466',
             textColor: '#FFFFFF',
