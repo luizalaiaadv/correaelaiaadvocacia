@@ -8,8 +8,18 @@ export default function TypebotBubble() {
       <Bubble
         typebot="correia-e-laia-lp-trabalhista-a-b-kb9c7vg"
         apiHost="https://typebot.io"
-        previewMessage={{ message: 'Faça sua consultoria jurídica 👇' }}
-        theme={{ button: { backgroundColor: '#26d466', size: 'large' } }}
+        previewMessage={{
+          message: 'Entre em contato conosco!',
+          autoShowDelay: 1000,
+        }}
+        theme={{
+          button: { backgroundColor: '#26d466', size: 'large' },
+          previewMessage: {
+            backgroundColor: '#26d466',
+            textColor: '#FFFFFF',
+            closeButtonIconColor: '#666460',
+          },
+        }}
       />
     </>
   );
