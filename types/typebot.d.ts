@@ -4,11 +4,20 @@ declare module '@typebot.io/react' {
   interface BubbleProps {
     typebot: string;
     apiHost?: string;
-    previewMessage?: { message: string };
+    previewMessage?: {
+      message: string;
+      autoShowDelay?: number;
+      avatarUrl?: string;
+    };
     theme?: {
       button?: {
         backgroundColor?: string;
         size?: 'small' | 'medium' | 'large';
+      };
+      previewMessage?: {
+        backgroundColor?: string;
+        textColor?: string;
+        closeButtonIconColor?: string;
       };
     };
     [key: string]: unknown;
