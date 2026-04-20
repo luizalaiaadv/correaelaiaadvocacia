@@ -15,9 +15,9 @@ export default function TypebotBubble() {
         theme={{
           button: { backgroundColor: '#26d466', size: 'large', borderRadius: '9999px' },
           previewMessage: {
-            backgroundColor: '#26d466',
-            textColor: '#FFFFFF',
-            closeButtonIconColor: '#666460',
+            backgroundColor: '#ffffff',
+            textColor: '#1a1a1a',
+            closeButtonIconColor: '#444444',
           },
         }}
       />
