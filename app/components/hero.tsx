@@ -14,10 +14,10 @@ export const Hero = () => {
           alt="Construção Civil"
           fill
           priority
-          quality={85}
+          quality={75}
           className="object-cover object-center"
           fetchPriority="high"
-          sizes="100vw"
+          sizes="(max-width: 640px) 640px, (max-width: 1024px) 1024px, 1280px"
         />
         <div className="absolute inset-0 bg-linear-to-r from-white via-white/90 to-transparent md:to-transparent" />
       </div>
