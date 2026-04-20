@@ -14,6 +14,7 @@ const config: NextConfig = {
   },
   experimental: {
     optimizePackageImports: ['motion', 'lucide-react', '@typebot.io/react'],
+    optimizeCss: true,
   },
 };
 

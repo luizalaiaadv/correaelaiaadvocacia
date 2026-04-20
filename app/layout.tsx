@@ -74,12 +74,11 @@ export default function RootLayout({
     <html lang="pt-BR" className={`${cinzel.variable} ${montserrat.variable}`}>
       <head>
         <link rel="preconnect" href="https://www.googletagmanager.com" />
+        <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
         <link rel="preconnect" href="https://typebot.io" />
-        <link
-          rel="preconnect"
-          href="https://lh3.googleusercontent.com"
-          crossOrigin="anonymous"
-        />
+        <link rel="dns-prefetch" href="https://typebot.io" />
+        <link rel="preconnect" href="https://lh3.googleusercontent.com" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="https://lh3.googleusercontent.com" />
 
         {/* Schema JSON-LD: LocalBusiness + LegalService */}
         <script
