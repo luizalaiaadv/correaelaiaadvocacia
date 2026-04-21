@@ -26,15 +26,16 @@ export const Hero = () => {
         <div className="max-w-2xl space-y-8">
           <FadeIn delay={0.2}>
             <h1 className="text-3xl md:text-5xl font-normal text-brand leading-[1.2] uppercase tracking-tight">
-              ADVOCACIA TRABALHISTA <br />
+              ADVOGADO TRABALHISTA <br />
               EM <span className="font-bold text-primary">BELO HORIZONTE</span>
             </h1>
           </FadeIn>
 
           <FadeIn delay={0.4}>
             <p className="text-sm md:text-base text-brand/80 max-w-lg leading-relaxed font-medium">
-              Somos um escritório de advocacia trabalhista em Belo Horizonte
-              especializado em defender os direitos de trabalhadores em MG.
+              Seu advogado trabalhista em BH para recuperar horas extras, FGTS,
+              rescisão indevida e outros direitos — consulta gratuita, sem risco
+              para você.
             </p>
           </FadeIn>
         </div>

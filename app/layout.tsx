@@ -19,11 +19,11 @@ const montserrat = Montserrat({
 });
 
 export const metadata: Metadata = {
-  title: 'Correa & Laia Advocacia | Advocacia Trabalhista em BH',
+  title: 'Correa & Laia Advocacia | Advogado Trabalhista em BH',
   description:
     'Especialistas em Direito do Trabalho em Belo Horizonte. Defesa técnica e humanizada dos direitos do trabalhador. Agende sua consulta com Correa & Laia Advocacia.',
   keywords: [
-    'Advocacia Trabalhista',
+    'Advogado Trabalhista',
     'Belo Horizonte',
     'BH',
     'Advogado Trabalhista',
@@ -38,7 +38,7 @@ export const metadata: Metadata = {
   authors: [{ name: 'Correa & Laia Advocacia' }],
   openGraph: {
     type: 'website',
-    title: 'Correa & Laia Advocacia | Advocacia Trabalhista em BH',
+    title: 'Correa & Laia Advocacia | Advogado Trabalhista em BH',
     description:
       'Especialistas em Direito do Trabalho em Belo Horizonte. Defesa técnica e humanizada dos direitos do trabalhador.',
     url: 'https://www.correaelaiaadvocacia.com',
@@ -55,7 +55,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Correa & Laia Advocacia | Advocacia Trabalhista em BH',
+    title: 'Correa & Laia Advocacia | Advogado Trabalhista em BH',
     description:
       'Especialistas em Direito do Trabalho em Belo Horizonte. Defesa técnica e humanizada dos direitos do trabalhador.',
     images: ['https://www.correaelaiaadvocacia.com/luizas.webp'],
