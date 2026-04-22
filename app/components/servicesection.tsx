@@ -78,7 +78,7 @@ export const ServicesSection = () => {
         <div className="text-center max-w-2xl mx-auto mb-16 space-y-4">
           <FadeIn>
             <h2 className="text-sm font-bold text-primary uppercase tracking-[0.3em]">
-              Nosso Advogado Trabalhista
+              Nosso Escritório Trabalhista
             </h2>
           </FadeIn>
           <FadeIn delay={0.2}>
