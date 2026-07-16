@@ -123,17 +123,6 @@ export const UTM_DIMENSIONS = [
 
 export type UtmDimension = (typeof UTM_DIMENSIONS)[number]['id'];
 
-export function countByField(leads: Lead[], field: UtmDimension): { value: string; count: number }[] {
-  const counts = new Map<string, number>();
-  for (const lead of leads) {
-    const value = lead[field]?.trim() || 'nao informado';
-    counts.set(value, (counts.get(value) ?? 0) + 1);
-  }
-  return [...counts.entries()]
-    .map(([value, count]) => ({ value, count }))
-    .sort((a, b) => b.count - a.count);
-}
-
 export function whatsappLink(phone: string | null): string | null {
   if (!phone) return null;
   const digits = phone.replace(/\D/g, '');

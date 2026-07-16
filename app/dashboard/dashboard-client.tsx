@@ -25,7 +25,6 @@ import {
   PERIODS,
   UTM_DIMENSIONS,
   countByDay,
-  countByField,
   dayKey,
   dayKeysBack,
   filterByPeriod,
@@ -37,7 +36,6 @@ import {
   periodRangeLabel,
   whatsappLink,
   type PeriodId,
-  type UtmDimension,
 } from './lead-utils';
 import { requestNotificationPermission, useLeadNotifications } from './use-lead-notifications';
 
@@ -187,7 +185,7 @@ export default function DashboardClient() {
               />
             </section>
 
-            <section className="mb-5 grid grid-cols-1 gap-4 lg:grid-cols-2">
+            <section className="grid grid-cols-1 gap-4 lg:grid-cols-2">
               <Panel title="Leads / dia" subtitle={rangeSubtitle(stats.series)}>
                 <DailyChart series={stats.series} isLoading={isLoading} />
               </Panel>
@@ -196,20 +194,6 @@ export default function DashboardClient() {
                 <RecentLeads leads={stats.visible} isLoading={isLoading} now={now} />
               </Panel>
             </section>
-
-            <Panel title="Por origem" subtitle={`${stats.visible.length} lead(s) - ${periodLabel}`}>
-              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-4">
-                {UTM_DIMENSIONS.map((dimension) => (
-                  <UtmBreakdown
-                    key={dimension.id}
-                    label={dimension.label}
-                    field={dimension.id}
-                    leads={stats.visible}
-                    isLoading={isLoading}
-                  />
-                ))}
-              </div>
-            </Panel>
           </>
         ) : (
           <Panel title="Dados dos leads" subtitle={periodLabel}>
@@ -492,54 +476,6 @@ function RecentLeads({ leads, isLoading, now }: { leads: Lead[]; isLoading: bool
   );
 }
 
-function UtmBreakdown({
-  label,
-  field,
-  leads,
-  isLoading,
-}: {
-  label: string;
-  field: UtmDimension;
-  leads: Lead[];
-  isLoading: boolean;
-}) {
-  const rows = countByField(leads, field);
-  const total = leads.length;
-
-  return (
-    <div>
-      <h3 className="mb-3 text-[11px] font-semibold tracking-[0.15em] text-secondary uppercase">{label}</h3>
-
-      {isLoading ? (
-        <div className="h-24 animate-pulse rounded-lg bg-white/5" />
-      ) : rows.length === 0 ? (
-        <p className="py-6 text-center text-xs text-white/40">Sem dados no periodo.</p>
-      ) : (
-        <ul className="max-h-44 space-y-3 overflow-y-auto pr-1">
-          {rows.map(({ value, count }) => {
-            const percent = total > 0 ? Math.round((count / total) * 100) : 0;
-            return (
-              <li key={value}>
-                <div className="mb-1 flex items-center justify-between gap-2 text-xs">
-                  <span className="truncate text-white/70" title={value}>
-                    {value}
-                  </span>
-                  <span className="shrink-0 text-white/40">
-                    {count} ({percent}%)
-                  </span>
-                </div>
-                <div className="h-1.5 overflow-hidden rounded-full bg-white/10">
-                  <div className="h-full rounded-full bg-secondary" style={{ width: `${percent}%` }} />
-                </div>
-              </li>
-            );
-          })}
-        </ul>
-      )}
-    </div>
-  );
-}
-
 function LeadsTable({ leads, isLoading }: { leads: Lead[]; isLoading: boolean }) {
   if (isLoading) {
     return (
@@ -557,7 +493,7 @@ function LeadsTable({ leads, isLoading }: { leads: Lead[]; isLoading: boolean })
 
   return (
     <div className="overflow-x-auto">
-      <table className="w-full min-w-[640px] border-collapse text-left text-sm">
+      <table className="w-full min-w-[1100px] border-collapse text-left text-sm">
         <thead>
           <tr className="border-b border-white/10">
             {['Data', 'Nome', 'Whatsapp', 'Resposta'].map((heading) => (
@@ -567,6 +503,15 @@ function LeadsTable({ leads, isLoading }: { leads: Lead[]; isLoading: boolean })
                 className="px-3 py-2 text-[11px] font-semibold tracking-[0.15em] text-white/45 uppercase"
               >
                 {heading}
+              </th>
+            ))}
+            {UTM_DIMENSIONS.map((dimension) => (
+              <th
+                key={dimension.id}
+                scope="col"
+                className="px-3 py-2 text-[11px] font-semibold tracking-[0.15em] text-secondary uppercase"
+              >
+                {dimension.label}
               </th>
             ))}
           </tr>
@@ -594,6 +539,14 @@ function LeadsTable({ leads, isLoading }: { leads: Lead[]; isLoading: boolean })
                   )}
                 </td>
                 <td className="px-3 py-3 text-white/70">{lead.message?.trim() || '--'}</td>
+                {UTM_DIMENSIONS.map((dimension) => {
+                  const value = lead[dimension.id]?.trim();
+                  return (
+                    <td key={dimension.id} className="px-3 py-3 text-white/60" title={value || undefined}>
+                      {value || <span className="text-white/25">--</span>}
+                    </td>
+                  );
+                })}
               </tr>
             );
           })}
