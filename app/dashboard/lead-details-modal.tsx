@@ -1,8 +1,9 @@
 'use client';
 
 import { useEffect, useLayoutEffect, useRef } from 'react';
-import { MessageCircle, X } from 'lucide-react';
+import { Check, MessageCircle, X } from 'lucide-react';
 import type { Lead } from '@/lib/typebot';
+import { cn } from '@/lib/utils';
 import { formatDateTime, whatsappLink } from './lead-utils';
 
 /**
@@ -38,10 +39,12 @@ function Field({
   label,
   value,
   href,
+  onLinkClick,
 }: {
   label: string;
   value: string | null;
   href?: string | null;
+  onLinkClick?: () => void;
 }) {
   const text = value?.trim();
 
@@ -56,6 +59,7 @@ function Field({
             href={href}
             target="_blank"
             rel="noopener noreferrer"
+            onClick={onLinkClick}
             className="glass-soft inline-flex max-w-full items-center gap-1.5 px-3 py-2 text-sm break-all text-emerald-300 transition hover:border-emerald-400/40 hover:text-emerald-200"
           >
             <MessageCircle className="size-3.5 shrink-0" aria-hidden />
@@ -72,7 +76,19 @@ function Field({
   );
 }
 
-export default function LeadDetailsModal({ lead, onClose }: { lead: Lead; onClose: () => void }) {
+export default function LeadDetailsModal({
+  lead,
+  onClose,
+  isContacted,
+  onToggleContacted,
+  onWhatsappClick,
+}: {
+  lead: Lead;
+  onClose: () => void;
+  isContacted: boolean;
+  onToggleContacted: () => void;
+  onWhatsappClick: () => void;
+}) {
   const closeRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
@@ -110,27 +126,49 @@ export default function LeadDetailsModal({ lead, onClose }: { lead: Lead; onClos
         className="glass-panel animate-modal-in my-auto w-full max-w-lg p-6"
       >
         <div className="mb-5 flex items-start justify-between gap-4">
-          <div>
-            <h2 id="lead-modal-title" className="font-display text-xl text-accent">
+          <div className="min-w-0">
+            <h2 id="lead-modal-title" className="truncate font-display text-xl text-accent">
               {lead.name?.trim() || 'Lead sem nome'}
             </h2>
             <p className="mt-0.5 text-[11px] tracking-wide text-white/40 uppercase">Dados completos do lead</p>
           </div>
-          <button
-            ref={closeRef}
-            type="button"
-            onClick={onClose}
-            aria-label="Fechar detalhes"
-            className="glass-soft shrink-0 p-2 text-white/60 transition hover:text-white"
-          >
-            <X className="size-4" aria-hidden />
-          </button>
+          <div className="flex shrink-0 items-center gap-2">
+            <button
+              type="button"
+              role="switch"
+              aria-checked={isContacted}
+              onClick={onToggleContacted}
+              className={cn(
+                'flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition',
+                isContacted
+                  ? 'border-emerald-400/50 bg-emerald-500/25 text-emerald-200'
+                  : 'border-white/20 bg-white/5 text-white/50 hover:text-white',
+              )}
+            >
+              <Check className="size-3" aria-hidden />
+              {isContacted ? 'Contatado' : 'Marcar contatado'}
+            </button>
+            <button
+              ref={closeRef}
+              type="button"
+              onClick={onClose}
+              aria-label="Fechar detalhes"
+              className="glass-soft p-2 text-white/60 transition hover:text-white"
+            >
+              <X className="size-4" aria-hidden />
+            </button>
+          </div>
         </div>
 
         <dl className="space-y-4">
           <Field label="Data" value={formatDateTime(lead.createdAt)} />
           <Field label="Nome" value={lead.name} />
-          <Field label="Whatsapp" value={lead.whatsapp} href={whatsappLink(lead.whatsapp)} />
+          <Field
+            label="Whatsapp"
+            value={lead.whatsapp}
+            href={whatsappLink(lead.whatsapp)}
+            onLinkClick={onWhatsappClick}
+          />
 
           <div>
             <dt className="mb-1.5 text-[10px] font-semibold tracking-[0.15em] text-secondary uppercase">Resposta</dt>

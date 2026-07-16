@@ -7,6 +7,7 @@ import {
   Bell,
   BellOff,
   ChartColumn,
+  Check,
   CircleAlert,
   Clock,
   LayoutDashboard,
@@ -41,6 +42,7 @@ import {
 } from './lead-utils';
 import { requestNotificationPermission, useLeadNotifications } from './use-lead-notifications';
 import { useScrollFade } from './use-scroll-fade';
+import { useContactedLeads } from './use-contacted-leads';
 import LeadDetailsModal from './lead-details-modal';
 
 const REFRESH_MS = 10_000;
@@ -87,6 +89,40 @@ const ACCENTS: Record<Accent, { chip: string; glow: string; rule: string; edge: 
   },
 };
 
+/** Toggle circular de "contatado": preenchido quando marcado, vazado quando nao. */
+function ContactedToggle({
+  on,
+  onToggle,
+  size = 'md',
+}: {
+  on: boolean;
+  onToggle: () => void;
+  size?: 'sm' | 'md';
+}) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={on}
+      aria-label={on ? 'Desmarcar contatado' : 'Marcar como contatado'}
+      title={on ? 'Contatado — clique para desmarcar' : 'Marcar como contatado'}
+      onClick={(event) => {
+        event.stopPropagation();
+        onToggle();
+      }}
+      className={cn(
+        'flex shrink-0 items-center justify-center rounded-full border transition',
+        size === 'sm' ? 'size-6' : 'size-7',
+        on
+          ? 'border-emerald-400/60 bg-emerald-500/30 text-emerald-300'
+          : 'border-white/20 bg-white/5 text-white/25 hover:border-white/40 hover:text-white/60',
+      )}
+    >
+      <Check className={size === 'sm' ? 'size-3' : 'size-3.5'} aria-hidden />
+    </button>
+  );
+}
+
 /** Brilho no canto + fio de luz no topo + barra lateral, na cor do card. */
 function AccentDecor({ accent }: { accent: Accent }) {
   const tone = ACCENTS[accent];
@@ -127,6 +163,7 @@ export default function DashboardClient() {
   const [now, setNow] = useState(() => Date.now());
 
   const { toasts, dismiss } = useLeadNotifications(leads, notificationsOn);
+  const { contacted, mark, toggle: toggleContacted, markAll, unmarkAll } = useContactedLeads();
 
   const load = useCallback(async () => {
     setIsRefreshing(true);
@@ -289,13 +326,24 @@ export default function DashboardClient() {
                   isLoading={isLoading}
                   now={now}
                   onSelect={setSelectedLead}
+                  contacted={contacted}
+                  onWhatsappClick={mark}
                 />
               </Panel>
             </section>
           </>
         ) : (
           <Panel title="Dados dos leads" subtitle={periodLabel}>
-            <LeadsData leads={stats.visible} isLoading={isLoading} onSelect={setSelectedLead} />
+            <LeadsData
+              leads={stats.visible}
+              isLoading={isLoading}
+              onSelect={setSelectedLead}
+              contacted={contacted}
+              onToggle={toggleContacted}
+              onWhatsappClick={mark}
+              onMarkAll={markAll}
+              onUnmarkAll={unmarkAll}
+            />
           </Panel>
         )}
 
@@ -310,7 +358,15 @@ export default function DashboardClient() {
 
       <ToastStack toasts={toasts} onDismiss={dismiss} />
 
-      {selectedLead && <LeadDetailsModal lead={selectedLead} onClose={() => setSelectedLead(null)} />}
+      {selectedLead && (
+        <LeadDetailsModal
+          lead={selectedLead}
+          onClose={() => setSelectedLead(null)}
+          isContacted={contacted.has(selectedLead.id)}
+          onToggleContacted={() => toggleContacted(selectedLead.id)}
+          onWhatsappClick={() => mark(selectedLead.id)}
+        />
+      )}
     </div>
   );
 }
@@ -565,11 +621,15 @@ function RecentLeads({
   isLoading,
   now,
   onSelect,
+  contacted,
+  onWhatsappClick,
 }: {
   leads: Lead[];
   isLoading: boolean;
   now: number;
   onSelect: (lead: Lead) => void;
+  contacted: ReadonlySet<string>;
+  onWhatsappClick: (id: string) => void;
 }) {
   if (isLoading) {
     return (
@@ -587,32 +647,57 @@ function RecentLeads({
 
   return (
     <ul className="max-h-40 space-y-2 overflow-y-auto pr-1">
-      {leads.slice(0, 25).map((lead) => (
-        <li key={lead.id}>
-          <button
-            type="button"
-            onClick={() => onSelect(lead)}
-            aria-label={`Ver dados de ${lead.name?.trim() || 'lead sem nome'}`}
-            className="glass-soft w-full cursor-pointer p-3 text-left transition hover:border-secondary/40 hover:bg-white/[0.09]"
+      {leads.slice(0, 25).map((lead) => {
+        const isContacted = contacted.has(lead.id);
+        const link = whatsappLink(lead.whatsapp);
+        return (
+          <li
+            key={lead.id}
+            className={cn(
+              'glass-soft flex items-stretch overflow-hidden transition',
+              isContacted && 'opacity-50 saturate-50',
+            )}
           >
-            <div className="flex items-center justify-between gap-2">
-              <span className="truncate text-sm font-medium text-white">{lead.name?.trim() || 'Lead sem nome'}</span>
-              <span className="shrink-0 text-[10px] text-white/35">{formatRelative(lead.createdAt, now)}</span>
-            </div>
-            <div className="mt-1 flex items-center justify-between gap-2">
-              <span className="truncate text-xs text-white/45">
-                {formatTime(lead.createdAt)} - {lead.utmSource?.trim() || 'direto'}
-              </span>
-              {lead.whatsapp && (
-                <span className="flex shrink-0 items-center gap-1 text-xs text-emerald-400/80">
-                  <MessageCircle className="size-3" aria-hidden />
-                  {lead.whatsapp}
+            <button
+              type="button"
+              onClick={() => onSelect(lead)}
+              aria-label={`Ver dados de ${lead.name?.trim() || 'lead sem nome'}`}
+              className="min-w-0 flex-1 cursor-pointer p-3 text-left transition hover:bg-white/[0.06]"
+            >
+              <div className="flex items-center justify-between gap-2">
+                <span className="flex min-w-0 items-center gap-1.5 text-sm font-medium text-white">
+                  {isContacted && <Check className="size-3 shrink-0 text-emerald-400" aria-hidden />}
+                  <span className="truncate">{lead.name?.trim() || 'Lead sem nome'}</span>
                 </span>
-              )}
-            </div>
-          </button>
-        </li>
-      ))}
+                <span className="shrink-0 text-[10px] text-white/35">{formatRelative(lead.createdAt, now)}</span>
+              </div>
+              <div className="mt-1 truncate text-xs text-white/45">
+                {formatTime(lead.createdAt)} - {lead.utmSource?.trim() || 'direto'}
+              </div>
+            </button>
+
+            {link && (
+              // Link real, fora do botao: abre a conversa e ja marca como contatado.
+              <a
+                href={link}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => onWhatsappClick(lead.id)}
+                aria-label={`Abrir WhatsApp de ${lead.name?.trim() || 'lead'}`}
+                className={cn(
+                  'flex shrink-0 items-center gap-1 border-l border-white/10 px-3 text-xs transition',
+                  isContacted
+                    ? 'text-white/35 hover:text-white/60'
+                    : 'text-emerald-400 hover:bg-emerald-500/10 hover:text-emerald-300',
+                )}
+              >
+                <MessageCircle className="size-3.5" aria-hidden />
+                <span className="hidden sm:inline">{lead.whatsapp}</span>
+              </a>
+            )}
+          </li>
+        );
+      })}
     </ul>
   );
 }
@@ -621,10 +706,20 @@ function LeadsData({
   leads,
   isLoading,
   onSelect,
+  contacted,
+  onToggle,
+  onWhatsappClick,
+  onMarkAll,
+  onUnmarkAll,
 }: {
   leads: Lead[];
   isLoading: boolean;
   onSelect: (lead: Lead) => void;
+  contacted: ReadonlySet<string>;
+  onToggle: (id: string) => void;
+  onWhatsappClick: (id: string) => void;
+  onMarkAll: (ids: string[]) => void;
+  onUnmarkAll: (ids: string[]) => void;
 }) {
   if (isLoading) {
     return (
@@ -640,67 +735,143 @@ function LeadsData({
     return <p className="py-12 text-center text-sm text-white/40">Nenhum lead no periodo selecionado.</p>;
   }
 
+  const visibleIds = leads.map((lead) => lead.id);
+  const contactedCount = visibleIds.filter((id) => contacted.has(id)).length;
+  const allContacted = contactedCount === visibleIds.length;
+
   return (
     <>
+      {/* Grupo de acao em massa: age so sobre os leads do periodo filtrado. */}
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+        <span className="text-xs tracking-wide text-white/45 uppercase">
+          {contactedCount} de {visibleIds.length} contatado(s)
+        </span>
+        <div role="group" aria-label="Marcar contatados em massa" className="glass-soft flex overflow-hidden p-0.5">
+          <button
+            type="button"
+            onClick={() => onMarkAll(visibleIds)}
+            aria-pressed={allContacted}
+            className={cn(
+              'flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition',
+              allContacted ? 'bg-emerald-500/25 text-emerald-200' : 'text-white/55 hover:text-white',
+            )}
+          >
+            <Check className="size-3" aria-hidden />
+            Marcar todos
+          </button>
+          <button
+            type="button"
+            onClick={() => onUnmarkAll(visibleIds)}
+            aria-pressed={contactedCount === 0}
+            className={cn(
+              'rounded-md px-3 py-1.5 text-xs font-medium transition',
+              contactedCount === 0 ? 'bg-white/10 text-white/80' : 'text-white/55 hover:text-white',
+            )}
+          >
+            Desmarcar todos
+          </button>
+        </div>
+      </div>
       {/* Celular: cartoes compactos; tocar abre o modal com todos os campos.
           Tabela de 8 colunas em 375px vira rolagem lateral cega — em lista, cada
           lead se le inteiro de uma vez. */}
       <ul className="space-y-2 md:hidden">
-        {leads.map((lead) => (
-          <li key={lead.id}>
-            <button
-              type="button"
-              onClick={() => onSelect(lead)}
-              aria-label={`Ver dados de ${lead.name?.trim() || 'lead sem nome'}`}
-              className="glass-soft w-full cursor-pointer p-3 text-left transition hover:border-secondary/40 hover:bg-white/[0.09]"
+        {leads.map((lead) => {
+          const isContacted = contacted.has(lead.id);
+          const link = whatsappLink(lead.whatsapp);
+          return (
+            <li
+              key={lead.id}
+              className={cn('glass-soft overflow-hidden transition', isContacted && 'opacity-50 saturate-50')}
             >
-              <div className="flex items-baseline justify-between gap-2">
-                <span className="truncate text-sm font-semibold text-white">
-                  {lead.name?.trim() || 'Lead sem nome'}
-                </span>
-                <span className="shrink-0 text-[10px] whitespace-nowrap text-white/40">
-                  {formatDateTime(lead.createdAt)}
-                </span>
-              </div>
+              <div className="flex items-stretch">
+                <button
+                  type="button"
+                  onClick={() => onSelect(lead)}
+                  aria-label={`Ver dados de ${lead.name?.trim() || 'lead sem nome'}`}
+                  className="min-w-0 flex-1 cursor-pointer p-3 text-left transition hover:bg-white/[0.06]"
+                >
+                  <div className="flex items-baseline justify-between gap-2">
+                    <span className="truncate text-sm font-semibold text-white">
+                      {lead.name?.trim() || 'Lead sem nome'}
+                    </span>
+                    <span className="shrink-0 text-[10px] whitespace-nowrap text-white/40">
+                      {formatDateTime(lead.createdAt)}
+                    </span>
+                  </div>
 
-              {lead.message?.trim() && (
-                <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-white/55">{lead.message.trim()}</p>
-              )}
+                  {lead.message?.trim() && (
+                    <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-white/55">{lead.message.trim()}</p>
+                  )}
 
-              <div className="mt-2 flex items-center justify-between gap-2">
-                {lead.whatsapp ? (
-                  <span className="flex min-w-0 items-center gap-1 text-xs text-emerald-400">
-                    <MessageCircle className="size-3 shrink-0" aria-hidden />
-                    <span className="truncate">{lead.whatsapp}</span>
-                  </span>
-                ) : (
-                  <span />
-                )}
-                {lead.utmContent?.trim() && (
-                  <span className="max-w-[55%] truncate rounded-full bg-secondary/25 px-2 py-0.5 text-[10px] text-[#e8b39a]">
-                    {lead.utmContent.trim()}
-                  </span>
-                )}
+                  {lead.utmContent?.trim() && (
+                    <span className="mt-2 inline-block max-w-full truncate rounded-full bg-secondary/25 px-2 py-0.5 text-[10px] text-[#e8b39a]">
+                      {lead.utmContent.trim()}
+                    </span>
+                  )}
+                </button>
+
+                <div className="flex shrink-0 flex-col items-center justify-center gap-2 border-l border-white/10 px-3">
+                  <ContactedToggle size="sm" on={isContacted} onToggle={() => onToggle(lead.id)} />
+                  {link && (
+                    <a
+                      href={link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={() => onWhatsappClick(lead.id)}
+                      aria-label={`Abrir WhatsApp de ${lead.name?.trim() || 'lead'}`}
+                      className={cn(
+                        'flex size-6 items-center justify-center rounded-full transition',
+                        isContacted
+                          ? 'text-white/35 hover:text-white/60'
+                          : 'text-emerald-400 hover:bg-emerald-500/15 hover:text-emerald-300',
+                      )}
+                    >
+                      <MessageCircle className="size-3.5" aria-hidden />
+                    </a>
+                  )}
+                </div>
               </div>
-            </button>
-          </li>
-        ))}
+            </li>
+          );
+        })}
       </ul>
 
       {/* Desktop: a tabela completa continua valendo; a linha tambem abre o modal. */}
       <div className="hidden overflow-x-auto md:block">
-        <LeadsTable leads={leads} onSelect={onSelect} />
+        <LeadsTable
+          leads={leads}
+          onSelect={onSelect}
+          contacted={contacted}
+          onToggle={onToggle}
+          onWhatsappClick={onWhatsappClick}
+        />
       </div>
     </>
   );
 }
 
-function LeadsTable({ leads, onSelect }: { leads: Lead[]; onSelect: (lead: Lead) => void }) {
+function LeadsTable({
+  leads,
+  onSelect,
+  contacted,
+  onToggle,
+  onWhatsappClick,
+}: {
+  leads: Lead[];
+  onSelect: (lead: Lead) => void;
+  contacted: ReadonlySet<string>;
+  onToggle: (id: string) => void;
+  onWhatsappClick: (id: string) => void;
+}) {
   return (
     <div className="overflow-x-auto">
       <table className="w-full min-w-[1100px] border-collapse text-left text-sm">
         <thead>
           <tr className="border-b border-white/10">
+            <th scope="col" className="px-3 py-2 text-[11px] font-semibold tracking-[0.15em] text-white/45 uppercase">
+              Contatado
+            </th>
             {['Data', 'Nome', 'Whatsapp', 'Resposta'].map((heading) => (
               <th
                 key={heading}
@@ -724,12 +895,19 @@ function LeadsTable({ leads, onSelect }: { leads: Lead[]; onSelect: (lead: Lead)
         <tbody>
           {leads.map((lead) => {
             const link = whatsappLink(lead.whatsapp);
+            const isContacted = contacted.has(lead.id);
             return (
               <tr
                 key={lead.id}
                 onClick={() => onSelect(lead)}
-                className="cursor-pointer border-b border-white/5 transition hover:bg-white/[0.05]"
+                className={cn(
+                  'cursor-pointer border-b border-white/5 transition hover:bg-white/[0.05]',
+                  isContacted && 'opacity-50 saturate-50',
+                )}
               >
+                <td className="px-3 py-3">
+                  <ContactedToggle on={isContacted} onToggle={() => onToggle(lead.id)} />
+                </td>
                 <td className="px-3 py-3 whitespace-nowrap text-white/60">{formatDateTime(lead.createdAt)}</td>
                 <td className="px-3 py-3 font-medium text-white">{lead.name?.trim() || '--'}</td>
                 <td className="px-3 py-3 whitespace-nowrap">
@@ -738,8 +916,14 @@ function LeadsTable({ leads, onSelect }: { leads: Lead[]; onSelect: (lead: Lead)
                       href={link}
                       target="_blank"
                       rel="noopener noreferrer"
-                      onClick={(event) => event.stopPropagation()}
-                      className="inline-flex items-center gap-1 text-emerald-400 transition hover:text-emerald-300"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        onWhatsappClick(lead.id);
+                      }}
+                      className={cn(
+                        'inline-flex items-center gap-1 transition',
+                        isContacted ? 'text-white/40 hover:text-white/60' : 'text-emerald-400 hover:text-emerald-300',
+                      )}
                     >
                       <MessageCircle className="size-3" aria-hidden />
                       {lead.whatsapp}
