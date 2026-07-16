@@ -15,7 +15,7 @@ View your app in AI Studio: https://ai.studio/apps/2bfb736f-767f-4c83-806c-58981
 
 1. Install dependencies:
    `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
+2. Copie o [.env.example](.env.example) para `.env.local` e preencha as variaveis do Typebot e a senha do dashboard.
 3. Run the app:
    `npm run dev`
 # correaelaiaadvocacia

@@ -7,6 +7,9 @@ coverage/
 .env*
 !.env.example
 
+# Config local do Claude Code: pode conter comandos com tokens embutidos.
+.claude/settings.local.json
+
 # Next.js
 .next/
 out/
