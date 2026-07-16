@@ -27,6 +27,66 @@
   }
 }
 
+/* Glassmorphism do dashboard. A textura de fundo aparece atraves dos paineis,
+   por isso o brilho da borda e a saturacao: sem eles o vidro parece cinza chapado. */
+@layer components {
+  .glass-panel {
+    @apply rounded-2xl border border-white/15 bg-white/[0.07] shadow-xl shadow-black/25;
+    backdrop-filter: blur(20px) saturate(140%);
+    -webkit-backdrop-filter: blur(20px) saturate(140%);
+  }
+
+  .glass-soft {
+    @apply rounded-lg border border-white/10 bg-white/[0.04];
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+}
+
+/* Navegadores sem backdrop-filter (Firefox antigo) cairiam num vidro
+   transparente demais e ilegivel: aqui o fundo vira solido. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .glass-panel,
+  .glass-soft {
+    @apply bg-[#2a1712]/95;
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes modal-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.2s ease-out;
+}
+
+.animate-modal-in {
+  animation: modal-in 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade-in,
+  .animate-modal-in {
+    animation: none;
+  }
+}
+
 @keyframes pulse-whatsapp {
   0% {
     transform: scale(1);

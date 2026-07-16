@@ -1,0 +1,18 @@
+{
+  "name": "Correa & Laia | Leads",
+  "short_name": "C&L Leads",
+  "description": "Acompanhe em tempo real os leads que chegam pelo Typebot.",
+  "start_url": "/dashboard",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#1a0c08",
+  "theme_color": "#78362d",
+  "lang": "pt-BR",
+  "categories": ["business", "productivity"],
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

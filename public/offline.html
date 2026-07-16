@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Sem conexao | Correa &amp; Laia</title>
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+      }
+      body {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 1.5rem;
+        font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+        color: #f5f5dc;
+        background-color: #1a0c08;
+        background-image: linear-gradient(rgba(26, 12, 8, 0.86), rgba(13, 6, 5, 0.92)), url('/texture-bg.webp');
+        background-size: cover;
+        background-position: center;
+        text-align: center;
+      }
+      .card {
+        max-width: 22rem;
+        padding: 2rem;
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        border-radius: 1rem;
+        background: rgba(255, 255, 255, 0.07);
+        backdrop-filter: blur(20px) saturate(140%);
+        -webkit-backdrop-filter: blur(20px) saturate(140%);
+      }
+      img {
+        width: 120px;
+        height: auto;
+        margin-bottom: 1.25rem;
+      }
+      h1 {
+        font-size: 1.15rem;
+        margin-bottom: 0.5rem;
+      }
+      p {
+        font-size: 0.875rem;
+        line-height: 1.5;
+        color: rgba(255, 255, 255, 0.6);
+      }
+      button {
+        margin-top: 1.5rem;
+        padding: 0.7rem 1.5rem;
+        border: 0;
+        border-radius: 0.5rem;
+        background: #a86b52;
+        color: #fff;
+        font: inherit;
+        font-size: 0.875rem;
+        cursor: pointer;
+      }
+      button:hover {
+        background: #824632;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <img src="/logofooter.webp" alt="Correa &amp; Laia Advocacia" />
+      <h1>Sem conexao</h1>
+      <p>
+        O painel precisa de internet para buscar os leads em tempo real. Verifique sua conexao e tente de novo.
+      </p>
+      <button type="button" onclick="location.reload()">Tentar novamente</button>
+    </div>
+  </body>
+</html>

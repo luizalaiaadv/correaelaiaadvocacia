@@ -1,8 +1,10 @@
 'use client';
 
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useState, type FormEvent } from 'react';
 import { Lock, LoaderCircle } from 'lucide-react';
+import imgLogo from '@/public/logofooter.webp';
 
 export default function LoginForm() {
   const router = useRouter();
@@ -40,14 +42,20 @@ export default function LoginForm() {
   return (
     <form
       onSubmit={handleSubmit}
-      className="w-full max-w-sm rounded-2xl border border-white/10 bg-[#171833] p-8 shadow-2xl"
+      className="glass-panel w-full max-w-sm p-8"
     >
       <div className="mb-6 flex flex-col items-center text-center">
-        <span className="mb-4 flex size-12 items-center justify-center rounded-full bg-secondary/20 text-secondary">
-          <Lock className="size-5" aria-hidden />
-        </span>
-        <h1 className="font-display text-xl text-accent">Dashboard de Leads</h1>
-        <p className="mt-1 text-sm text-white/50">Correa &amp; Laia Advocacia</p>
+        <Image
+          src={imgLogo}
+          alt="Correa & Laia Advocacia"
+          priority
+          className="mb-4 w-[132px]"
+          style={{ height: 'auto' }}
+        />
+        <h1 className="flex items-center gap-2 font-display text-xl text-accent">
+          <Lock className="size-4 text-secondary" aria-hidden />
+          Dashboard de Leads
+        </h1>
       </div>
 
       <label htmlFor="password" className="mb-2 block text-xs font-medium tracking-wide text-white/60 uppercase">
@@ -62,7 +70,7 @@ export default function LoginForm() {
         required
         value={password}
         onChange={(event) => setPassword(event.target.value)}
-        className="w-full rounded-lg border border-white/10 bg-[#0f1020] px-4 py-3 text-white outline-none transition focus:border-secondary"
+        className="glass-soft w-full px-4 py-3 text-white outline-none transition focus:border-secondary"
       />
 
       {error && (

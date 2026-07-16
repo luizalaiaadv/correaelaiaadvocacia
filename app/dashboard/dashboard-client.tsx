@@ -38,6 +38,7 @@ import {
   type PeriodId,
 } from './lead-utils';
 import { requestNotificationPermission, useLeadNotifications } from './use-lead-notifications';
+import LeadDetailsModal from './lead-details-modal';
 
 const REFRESH_MS = 10_000;
 
@@ -52,6 +53,7 @@ export default function DashboardClient() {
   const [period, setPeriod] = useState<PeriodId>('today');
   const [view, setView] = useState<View>('overview');
   const [notificationsOn, setNotificationsOn] = useState(false);
+  const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [now, setNow] = useState(() => Date.now());
 
   const { toasts, dismiss } = useLeadNotifications(leads, notificationsOn);
@@ -134,7 +136,14 @@ export default function DashboardClient() {
   const periodLabel = `${PERIODS.find((item) => item.id === period)?.label} - ${periodRangeLabel(period, now)}`;
 
   return (
-    <div className="min-h-screen bg-[#0f1020] text-white">
+    <div className="relative min-h-screen text-white">
+      {/* Textura fixa: os paineis de vidro desfocam o que passa por tras deles. */}
+      <div aria-hidden className="fixed inset-0 -z-10">
+        <div className="absolute inset-0 bg-[url('/texture-bg.webp')] bg-cover bg-center" />
+        {/* Sem este veu o texto branco perde contraste sobre as areas claras da textura. */}
+        <div className="absolute inset-0 bg-gradient-to-br from-[#1a0c08]/88 via-[#2a1209]/82 to-[#0d0605]/92" />
+      </div>
+
       <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
         <Header
           view={view}
@@ -191,7 +200,12 @@ export default function DashboardClient() {
               </Panel>
 
               <Panel title="Leads recentes" subtitle={periodLabel}>
-                <RecentLeads leads={stats.visible} isLoading={isLoading} now={now} />
+                <RecentLeads
+                  leads={stats.visible}
+                  isLoading={isLoading}
+                  now={now}
+                  onSelect={setSelectedLead}
+                />
               </Panel>
             </section>
           </>
@@ -211,6 +225,8 @@ export default function DashboardClient() {
       </div>
 
       <ToastStack toasts={toasts} onDismiss={dismiss} />
+
+      {selectedLead && <LeadDetailsModal lead={selectedLead} onClose={() => setSelectedLead(null)} />}
     </div>
   );
 }
@@ -252,13 +268,16 @@ function Header({
     <header className="mb-6">
       <div className="mb-5 flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-4">
+          {/* A logo e um lockup completo (monograma + nome + "ADVOCACIA"). Abaixo
+              de ~110px a terceira linha vira borrao ilegivel. */}
           <Image
             src={imgLogo}
             alt="Correa & Laia Advocacia"
             priority
-            style={{ width: '64px', height: 'auto' }}
+            className="w-[104px] sm:w-[124px]"
+            style={{ height: 'auto' }}
           />
-          <div className="border-l border-white/10 pl-4">
+          <div className="border-l border-white/15 pl-4">
             <p className="text-[11px] font-medium tracking-[0.2em] text-secondary uppercase">
               Dashboard em tempo real
             </p>
@@ -323,7 +342,7 @@ function Header({
       <div
         role="tablist"
         aria-label="Filtro de periodo"
-        className="flex gap-1 overflow-x-auto rounded-xl border border-white/10 bg-[#171833] p-1"
+        className="glass-panel flex gap-1 overflow-x-auto rounded-xl p-1"
       >
         {PERIODS.map((item) => (
           <button
@@ -359,7 +378,7 @@ function StatCard({
   iconTone?: 'neutral' | 'positive' | 'negative';
 }) {
   return (
-    <article className="rounded-2xl border border-white/10 bg-[#171833] p-5">
+    <article className="glass-panel p-5">
       <div className="mb-4 flex items-start justify-between">
         <h2 className="text-[11px] font-semibold tracking-[0.15em] text-white/45 uppercase">{label}</h2>
         <span
@@ -395,7 +414,7 @@ function Panel({
   children: React.ReactNode;
 }) {
   return (
-    <section className="rounded-2xl border border-white/10 bg-[#171833] p-5">
+    <section className="glass-panel p-5">
       <h2 className="font-display text-lg text-accent">{title}</h2>
       <p className="mt-0.5 mb-4 text-[11px] tracking-wide text-white/40 uppercase">{subtitle}</p>
       {children}
@@ -428,7 +447,17 @@ function DailyChart({ series, isLoading }: { series: { key: string; count: numbe
   );
 }
 
-function RecentLeads({ leads, isLoading, now }: { leads: Lead[]; isLoading: boolean; now: number }) {
+function RecentLeads({
+  leads,
+  isLoading,
+  now,
+  onSelect,
+}: {
+  leads: Lead[];
+  isLoading: boolean;
+  now: number;
+  onSelect: (lead: Lead) => void;
+}) {
   if (isLoading) {
     return (
       <div className="space-y-2">
@@ -445,33 +474,32 @@ function RecentLeads({ leads, isLoading, now }: { leads: Lead[]; isLoading: bool
 
   return (
     <ul className="max-h-40 space-y-2 overflow-y-auto pr-1">
-      {leads.slice(0, 25).map((lead) => {
-        const link = whatsappLink(lead.whatsapp);
-        return (
-          <li key={lead.id} className="rounded-lg border border-white/5 bg-white/[0.03] p-3">
+      {leads.slice(0, 25).map((lead) => (
+        <li key={lead.id}>
+          <button
+            type="button"
+            onClick={() => onSelect(lead)}
+            aria-label={`Ver dados de ${lead.name?.trim() || 'lead sem nome'}`}
+            className="glass-soft w-full cursor-pointer p-3 text-left transition hover:border-secondary/40 hover:bg-white/[0.09]"
+          >
             <div className="flex items-center justify-between gap-2">
-              <p className="truncate text-sm font-medium text-white">{lead.name?.trim() || 'Lead sem nome'}</p>
+              <span className="truncate text-sm font-medium text-white">{lead.name?.trim() || 'Lead sem nome'}</span>
               <span className="shrink-0 text-[10px] text-white/35">{formatRelative(lead.createdAt, now)}</span>
             </div>
             <div className="mt-1 flex items-center justify-between gap-2">
               <span className="truncate text-xs text-white/45">
                 {formatTime(lead.createdAt)} - {lead.utmSource?.trim() || 'direto'}
               </span>
-              {link && (
-                <a
-                  href={link}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex shrink-0 items-center gap-1 text-xs text-emerald-400 transition hover:text-emerald-300"
-                >
+              {lead.whatsapp && (
+                <span className="flex shrink-0 items-center gap-1 text-xs text-emerald-400/80">
                   <MessageCircle className="size-3" aria-hidden />
                   {lead.whatsapp}
-                </a>
+                </span>
               )}
             </div>
-          </li>
-        );
-      })}
+          </button>
+        </li>
+      ))}
     </ul>
   );
 }
@@ -571,7 +599,7 @@ function ToastStack({
       {toasts.map((toast) => (
         <div
           key={toast.id}
-          className="pointer-events-auto flex items-start gap-3 rounded-xl border border-secondary/40 bg-[#171833] p-4 shadow-2xl"
+          className="glass-panel animate-modal-in pointer-events-auto flex items-start gap-3 border-secondary/40 p-4"
         >
           <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-300">
             <Users className="size-4" aria-hidden />
