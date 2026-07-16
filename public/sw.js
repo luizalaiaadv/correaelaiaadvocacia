@@ -4,7 +4,9 @@
 // real" servindo lead antigo do cache seria pior do que nao abrir. O cache cobre
 // apenas a casca visual (icones, textura, bundles estaticos).
 
-const CACHE = 'cl-leads-v1';
+// A textura de fundo e cacheada por URL: sempre que ela mudar, suba a versao
+// aqui, senao apps ja instalados continuam mostrando a imagem antiga.
+const CACHE = 'cl-leads-v3';
 const OFFLINE_URL = '/offline.html';
 
 const PRECACHE = [OFFLINE_URL, '/texture-bg.webp', '/icon-192.png', '/icon-512.png', '/logofooter.webp'];

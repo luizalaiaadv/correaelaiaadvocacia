@@ -6,7 +6,9 @@ import { useRouter } from 'next/navigation';
 import {
   Bell,
   BellOff,
+  ChartColumn,
   CircleAlert,
+  Clock,
   LayoutDashboard,
   LogOut,
   MessageCircle,
@@ -44,6 +46,73 @@ import LeadDetailsModal from './lead-details-modal';
 const REFRESH_MS = 10_000;
 
 type View = 'overview' | 'leads';
+
+/**
+ * Cor de destaque por card, para diferenciar um do outro de relance. A escada e
+ * quente (cobre -> dourado -> creme) para nao brigar com o marrom da marca; as
+ * duas ultimas sao semanticas e so aparecem no card de variacao.
+ */
+type Accent = 'copper' | 'gold' | 'cream' | 'positive' | 'negative';
+
+const ACCENTS: Record<Accent, { chip: string; glow: string; rule: string; edge: string }> = {
+  copper: {
+    chip: 'bg-secondary/40 text-[#e8b39a]',
+    glow: 'bg-secondary/45',
+    rule: 'via-secondary',
+    edge: 'bg-secondary',
+  },
+  gold: {
+    chip: 'bg-amber-400/30 text-amber-200',
+    glow: 'bg-amber-400/35',
+    rule: 'via-amber-300/90',
+    edge: 'bg-amber-400',
+  },
+  cream: {
+    chip: 'bg-accent/30 text-accent',
+    glow: 'bg-accent/30',
+    rule: 'via-accent/90',
+    edge: 'bg-accent',
+  },
+  positive: {
+    chip: 'bg-emerald-500/35 text-emerald-200',
+    glow: 'bg-emerald-500/35',
+    rule: 'via-emerald-400/90',
+    edge: 'bg-emerald-400',
+  },
+  negative: {
+    chip: 'bg-red-500/35 text-red-200',
+    glow: 'bg-red-500/35',
+    rule: 'via-red-400/90',
+    edge: 'bg-red-400',
+  },
+};
+
+/** Brilho no canto + fio de luz no topo + barra lateral, na cor do card. */
+function AccentDecor({ accent }: { accent: Accent }) {
+  const tone = ACCENTS[accent];
+  return (
+    <>
+      <div
+        aria-hidden
+        className={cn(
+          'pointer-events-none absolute -top-16 -right-10 size-48 rounded-full blur-3xl',
+          tone.glow,
+        )}
+      />
+      <div
+        aria-hidden
+        className={cn(
+          'pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent to-transparent',
+          tone.rule,
+        )}
+      />
+      <div
+        aria-hidden
+        className={cn('pointer-events-none absolute top-4 bottom-4 left-0 w-1 rounded-r-full opacity-80', tone.edge)}
+      />
+    </>
+  );
+}
 
 export default function DashboardClient() {
   const router = useRouter();
@@ -141,8 +210,10 @@ export default function DashboardClient() {
       {/* Textura fixa: os paineis de vidro desfocam o que passa por tras deles. */}
       <div aria-hidden className="fixed inset-0 -z-10">
         <div className="absolute inset-0 bg-[url('/texture-bg.webp')] bg-cover bg-center" />
-        {/* Sem este veu o texto branco perde contraste sobre as areas claras da textura. */}
-        <div className="absolute inset-0 bg-gradient-to-br from-[#1a0c08]/88 via-[#2a1209]/82 to-[#0d0605]/92" />
+        {/* A foto e um horizonte: ceu claro em cima (lum ~155), mar azul embaixo.
+            O veu e neutro (um marrom mataria o azul) e vertical como a imagem,
+            mais denso no topo, onde ficam a logo e o titulo. */}
+        <div className="absolute inset-0 bg-gradient-to-b from-[#16101a]/85 via-[#121016]/70 to-[#0a0910]/85" />
       </div>
 
       <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
@@ -174,12 +245,15 @@ export default function DashboardClient() {
             <section className="mb-5 grid grid-cols-1 gap-4 md:grid-cols-2">
               <StatCard
                 label="Leads hoje"
+                accent="copper"
                 icon={<Users className="size-4" aria-hidden />}
                 value={isLoading ? null : String(stats.todayCount)}
                 caption={formatFullDate(dayKey(new Date(now)))}
               />
               <StatCard
                 label="Hoje vs. ontem"
+                // Aqui a cor carrega significado (subiu/caiu), entao ela manda.
+                accent={stats.delta > 0 ? 'positive' : stats.delta < 0 ? 'negative' : 'copper'}
                 icon={
                   stats.delta > 0 ? (
                     <TrendingUp className="size-4" aria-hidden />
@@ -189,18 +263,27 @@ export default function DashboardClient() {
                     <Minus className="size-4" aria-hidden />
                   )
                 }
-                iconTone={stats.delta > 0 ? 'positive' : stats.delta < 0 ? 'negative' : 'neutral'}
                 value={isLoading ? null : `${stats.delta > 0 ? '+' : ''}${stats.delta}`}
                 caption={`${stats.yesterdayCount} lead(s) ontem`}
               />
             </section>
 
             <section className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-              <Panel title="Leads / dia" subtitle={rangeSubtitle(stats.series)}>
+              <Panel
+                title="Leads / dia"
+                subtitle={rangeSubtitle(stats.series)}
+                accent="gold"
+                icon={<ChartColumn className="size-4" aria-hidden />}
+              >
                 <DailyChart series={stats.series} isLoading={isLoading} />
               </Panel>
 
-              <Panel title="Leads recentes" subtitle={periodLabel}>
+              <Panel
+                title="Leads recentes"
+                subtitle={periodLabel}
+                accent="cream"
+                icon={<Clock className="size-4" aria-hidden />}
+              >
                 <RecentLeads
                   leads={stats.visible}
                   isLoading={isLoading}
@@ -212,7 +295,7 @@ export default function DashboardClient() {
           </>
         ) : (
           <Panel title="Dados dos leads" subtitle={periodLabel}>
-            <LeadsTable leads={stats.visible} isLoading={isLoading} />
+            <LeadsData leads={stats.visible} isLoading={isLoading} onSelect={setSelectedLead} />
           </Panel>
         )}
 
@@ -377,37 +460,34 @@ function StatCard({
   value,
   caption,
   icon,
-  iconTone = 'neutral',
+  accent,
 }: {
   label: string;
   value: string | null;
   caption: string;
   icon: React.ReactNode;
-  iconTone?: 'neutral' | 'positive' | 'negative';
+  accent: Accent;
 }) {
   return (
-    <article className="glass-panel p-5">
-      <div className="mb-4 flex items-start justify-between">
-        <h2 className="text-[11px] font-semibold tracking-[0.15em] text-white/45 uppercase">{label}</h2>
-        <span
-          className={cn(
-            'flex size-8 items-center justify-center rounded-full',
-            iconTone === 'positive' && 'bg-emerald-500/20 text-emerald-300',
-            iconTone === 'negative' && 'bg-red-500/20 text-red-300',
-            iconTone === 'neutral' && 'bg-secondary/20 text-secondary',
-          )}
-        >
-          {icon}
-        </span>
+    <article className="glass-panel relative overflow-hidden p-5">
+      <AccentDecor accent={accent} />
+
+      <div className="relative">
+        <div className="mb-4 flex items-start justify-between">
+          <h2 className="text-[11px] font-semibold tracking-[0.15em] text-white/45 uppercase">{label}</h2>
+          <span className={cn('flex size-8 items-center justify-center rounded-full', ACCENTS[accent].chip)}>
+            {icon}
+          </span>
+        </div>
+
+        {value === null ? (
+          <div className="h-10 w-20 animate-pulse rounded bg-white/10" />
+        ) : (
+          <p className="font-display text-4xl leading-none text-accent">{value}</p>
+        )}
+
+        <p className="mt-3 text-xs tracking-wide text-white/40 uppercase">{caption}</p>
       </div>
-
-      {value === null ? (
-        <div className="h-10 w-20 animate-pulse rounded bg-white/10" />
-      ) : (
-        <p className="font-display text-4xl leading-none text-accent">{value}</p>
-      )}
-
-      <p className="mt-3 text-xs tracking-wide text-white/40 uppercase">{caption}</p>
     </article>
   );
 }
@@ -415,17 +495,34 @@ function StatCard({
 function Panel({
   title,
   subtitle,
+  accent,
+  icon,
   children,
 }: {
   title: string;
   subtitle: string;
+  accent?: Accent;
+  icon?: React.ReactNode;
   children: React.ReactNode;
 }) {
   return (
-    <section className="glass-panel p-5">
-      <h2 className="font-display text-lg text-accent">{title}</h2>
-      <p className="mt-0.5 mb-4 text-[11px] tracking-wide text-white/40 uppercase">{subtitle}</p>
-      {children}
+    <section className={cn('glass-panel p-5', accent && 'relative overflow-hidden')}>
+      {accent && <AccentDecor accent={accent} />}
+
+      <div className="relative">
+        <div className="mb-4 flex items-start justify-between gap-3">
+          <div>
+            <h2 className="font-display text-lg text-accent">{title}</h2>
+            <p className="mt-0.5 text-[11px] tracking-wide text-white/40 uppercase">{subtitle}</p>
+          </div>
+          {accent && icon && (
+            <span className={cn('flex size-8 shrink-0 items-center justify-center rounded-full', ACCENTS[accent].chip)}>
+              {icon}
+            </span>
+          )}
+        </div>
+        {children}
+      </div>
     </section>
   );
 }
@@ -434,11 +531,17 @@ function DailyChart({ series, isLoading }: { series: { key: string; count: numbe
   if (isLoading) return <div className="h-40 animate-pulse rounded-lg bg-white/5" />;
 
   const max = Math.max(1, ...series.map((point) => point.count));
+  // Com 14 colunas o rotulo "05/07" nao cabe na largura de um celular e estoura
+  // o card. Acima de 7 barras, mostra so o dia; a data completa fica no title.
+  const compact = series.length > 7;
 
   return (
-    <div className="flex h-40 items-end gap-1.5">
+    <div className="flex h-40 items-end gap-1 overflow-hidden sm:gap-1.5">
       {series.map((point) => (
-        <div key={point.key} className="group flex h-full flex-1 flex-col items-center justify-end gap-1.5">
+        <div
+          key={point.key}
+          className="group flex h-full min-w-0 flex-1 flex-col items-center justify-end gap-1.5"
+        >
           <span className="text-[10px] font-medium text-white/50">{point.count > 0 ? point.count : ''}</span>
           <div
             className={cn(
@@ -448,7 +551,9 @@ function DailyChart({ series, isLoading }: { series: { key: string; count: numbe
             style={{ height: `${Math.max(2, (point.count / max) * 100)}%` }}
             title={`${formatShortDate(point.key)}: ${point.count} lead(s)`}
           />
-          <span className="text-[9px] whitespace-nowrap text-white/30">{formatShortDate(point.key)}</span>
+          <span className="max-w-full truncate text-[9px] text-white/30">
+            {compact ? point.key.slice(8) : formatShortDate(point.key)}
+          </span>
         </div>
       ))}
     </div>
@@ -512,7 +617,15 @@ function RecentLeads({
   );
 }
 
-function LeadsTable({ leads, isLoading }: { leads: Lead[]; isLoading: boolean }) {
+function LeadsData({
+  leads,
+  isLoading,
+  onSelect,
+}: {
+  leads: Lead[];
+  isLoading: boolean;
+  onSelect: (lead: Lead) => void;
+}) {
   if (isLoading) {
     return (
       <div className="space-y-2">
@@ -527,6 +640,62 @@ function LeadsTable({ leads, isLoading }: { leads: Lead[]; isLoading: boolean })
     return <p className="py-12 text-center text-sm text-white/40">Nenhum lead no periodo selecionado.</p>;
   }
 
+  return (
+    <>
+      {/* Celular: cartoes compactos; tocar abre o modal com todos os campos.
+          Tabela de 8 colunas em 375px vira rolagem lateral cega — em lista, cada
+          lead se le inteiro de uma vez. */}
+      <ul className="space-y-2 md:hidden">
+        {leads.map((lead) => (
+          <li key={lead.id}>
+            <button
+              type="button"
+              onClick={() => onSelect(lead)}
+              aria-label={`Ver dados de ${lead.name?.trim() || 'lead sem nome'}`}
+              className="glass-soft w-full cursor-pointer p-3 text-left transition hover:border-secondary/40 hover:bg-white/[0.09]"
+            >
+              <div className="flex items-baseline justify-between gap-2">
+                <span className="truncate text-sm font-semibold text-white">
+                  {lead.name?.trim() || 'Lead sem nome'}
+                </span>
+                <span className="shrink-0 text-[10px] whitespace-nowrap text-white/40">
+                  {formatDateTime(lead.createdAt)}
+                </span>
+              </div>
+
+              {lead.message?.trim() && (
+                <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-white/55">{lead.message.trim()}</p>
+              )}
+
+              <div className="mt-2 flex items-center justify-between gap-2">
+                {lead.whatsapp ? (
+                  <span className="flex min-w-0 items-center gap-1 text-xs text-emerald-400">
+                    <MessageCircle className="size-3 shrink-0" aria-hidden />
+                    <span className="truncate">{lead.whatsapp}</span>
+                  </span>
+                ) : (
+                  <span />
+                )}
+                {lead.utmContent?.trim() && (
+                  <span className="max-w-[55%] truncate rounded-full bg-secondary/25 px-2 py-0.5 text-[10px] text-[#e8b39a]">
+                    {lead.utmContent.trim()}
+                  </span>
+                )}
+              </div>
+            </button>
+          </li>
+        ))}
+      </ul>
+
+      {/* Desktop: a tabela completa continua valendo; a linha tambem abre o modal. */}
+      <div className="hidden overflow-x-auto md:block">
+        <LeadsTable leads={leads} onSelect={onSelect} />
+      </div>
+    </>
+  );
+}
+
+function LeadsTable({ leads, onSelect }: { leads: Lead[]; onSelect: (lead: Lead) => void }) {
   return (
     <div className="overflow-x-auto">
       <table className="w-full min-w-[1100px] border-collapse text-left text-sm">
@@ -556,7 +725,11 @@ function LeadsTable({ leads, isLoading }: { leads: Lead[]; isLoading: boolean })
           {leads.map((lead) => {
             const link = whatsappLink(lead.whatsapp);
             return (
-              <tr key={lead.id} className="border-b border-white/5 transition hover:bg-white/[0.03]">
+              <tr
+                key={lead.id}
+                onClick={() => onSelect(lead)}
+                className="cursor-pointer border-b border-white/5 transition hover:bg-white/[0.05]"
+              >
                 <td className="px-3 py-3 whitespace-nowrap text-white/60">{formatDateTime(lead.createdAt)}</td>
                 <td className="px-3 py-3 font-medium text-white">{lead.name?.trim() || '--'}</td>
                 <td className="px-3 py-3 whitespace-nowrap">
@@ -565,6 +738,7 @@ function LeadsTable({ leads, isLoading }: { leads: Lead[]; isLoading: boolean })
                       href={link}
                       target="_blank"
                       rel="noopener noreferrer"
+                      onClick={(event) => event.stopPropagation()}
                       className="inline-flex items-center gap-1 text-emerald-400 transition hover:text-emerald-300"
                     >
                       <MessageCircle className="size-3" aria-hidden />
