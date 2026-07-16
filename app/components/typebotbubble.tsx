@@ -6,7 +6,7 @@ export default function TypebotBubble() {
   return (
     <>
       <Bubble
-        typebot="correia-e-laia-lp-trabalhista-a-b-kb9c7vg"
+        typebot="correaelaiaadvocacia"
         apiHost="https://typebot.io"
         theme={{
           button: {
