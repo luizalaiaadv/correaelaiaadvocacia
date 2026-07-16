@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { fetchLeads } from '@/lib/typebot';
+import { TypebotConfigError, fetchLeads } from '@/lib/typebot';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,8 +12,21 @@ export async function GET() {
     );
   } catch (error) {
     console.error('[api/leads]', error);
+
+    // Nomes de variaveis nao sao segredo (os valores sim), entao podem ir para o
+    // cliente: sem isso um erro de configuracao fica indistinguivel de queda do Typebot.
+    if (error instanceof TypebotConfigError) {
+      return NextResponse.json(
+        {
+          error: `Configuracao ausente no servidor: ${error.missing.join(', ')}.`,
+          code: 'config_missing',
+        },
+        { status: 500 },
+      );
+    }
+
     return NextResponse.json(
-      { error: 'Nao foi possivel carregar os leads do Typebot.' },
+      { error: 'O Typebot nao respondeu. Tente novamente em instantes.', code: 'upstream_error' },
       { status: 502 },
     );
   }

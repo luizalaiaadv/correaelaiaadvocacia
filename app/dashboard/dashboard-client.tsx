@@ -67,14 +67,19 @@ export default function DashboardClient() {
         router.replace('/dashboard/login');
         return;
       }
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
-      const data = (await response.json()) as { leads: Lead[] };
-      setLeads(data.leads);
+      const data = (await response.json()) as { leads?: Lead[]; error?: string };
+
+      if (!response.ok) {
+        setError(data.error ?? `Falha ao sincronizar (HTTP ${response.status}).`);
+        return;
+      }
+
+      setLeads(data.leads ?? []);
       setLastUpdated(new Date());
       setError(null);
     } catch {
-      setError('Falha ao sincronizar com o Typebot.');
+      setError('Falha de conexao ao buscar os leads.');
     } finally {
       setIsRefreshing(false);
     }

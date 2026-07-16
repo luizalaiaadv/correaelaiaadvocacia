@@ -70,13 +70,24 @@ function toLead(result: TypebotResult): Lead {
   };
 }
 
+/** Distingue "faltou configurar o ambiente" de "o Typebot falhou": as causas sao opostas. */
+export class TypebotConfigError extends Error {
+  constructor(public readonly missing: string[]) {
+    super(`Variaveis ausentes no ambiente: ${missing.join(', ')}.`);
+    this.name = 'TypebotConfigError';
+  }
+}
+
 export async function fetchLeads(): Promise<Lead[]> {
   const token = process.env.TYPEBOT_API_TOKEN;
   const typebotId = process.env.TYPEBOT_ID;
 
-  if (!token || !typebotId) {
-    throw new Error('TYPEBOT_API_TOKEN e TYPEBOT_ID precisam estar definidos.');
-  }
+  const missing = [
+    !token && 'TYPEBOT_API_TOKEN',
+    !typebotId && 'TYPEBOT_ID',
+  ].filter((name): name is string => Boolean(name));
+
+  if (missing.length > 0) throw new TypebotConfigError(missing);
 
   const leads: Lead[] = [];
   let cursor: string | undefined;
