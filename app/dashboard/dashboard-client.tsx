@@ -38,6 +38,7 @@ import {
   type PeriodId,
 } from './lead-utils';
 import { requestNotificationPermission, useLeadNotifications } from './use-lead-notifications';
+import { useScrollFade } from './use-scroll-fade';
 import LeadDetailsModal from './lead-details-modal';
 
 const REFRESH_MS = 10_000;
@@ -259,6 +260,8 @@ function Header({
   onLogout: () => void;
   now: number;
 }) {
+  const periodScroller = useScrollFade<HTMLDivElement>();
+
   const views: { id: View; label: string; icon: React.ReactNode }[] = [
     { id: 'overview', label: 'Visao geral', icon: <LayoutDashboard className="size-4" aria-hidden /> },
     { id: 'leads', label: 'Dados dos leads', icon: <Table2 className="size-4" aria-hidden /> },
@@ -339,26 +342,31 @@ function Header({
         ))}
       </div>
 
-      <div
-        role="tablist"
-        aria-label="Filtro de periodo"
-        className="glass-panel no-scrollbar flex gap-1 overflow-x-auto rounded-xl p-1"
-      >
-        {PERIODS.map((item) => (
-          <button
-            key={item.id}
-            role="tab"
-            aria-selected={period === item.id}
-            onClick={() => onPeriodChange(item.id)}
-            className={cn(
-              'shrink-0 rounded-lg px-4 py-2 text-center transition',
-              period === item.id ? 'bg-accent text-[#0f1020]' : 'text-white/55 hover:text-white',
-            )}
-          >
-            <span className="block text-xs font-semibold tracking-wide uppercase">{item.label}</span>
-            <span className="block text-[10px] opacity-70">{periodRangeLabel(item.id, now)}</span>
-          </button>
-        ))}
+      {/* O vidro fica no wrapper e a rolagem no filho: a mask do scroll-fade
+          dissolveria a borda e o proprio vidro se estivesse no mesmo elemento. */}
+      <div className="glass-panel rounded-xl p-1">
+        <div
+          ref={periodScroller}
+          role="tablist"
+          aria-label="Filtro de periodo"
+          className="scroll-fade-x no-scrollbar flex gap-1 overflow-x-auto"
+        >
+          {PERIODS.map((item) => (
+            <button
+              key={item.id}
+              role="tab"
+              aria-selected={period === item.id}
+              onClick={() => onPeriodChange(item.id)}
+              className={cn(
+                'shrink-0 rounded-lg px-4 py-2 text-center transition',
+                period === item.id ? 'bg-accent text-[#0f1020]' : 'text-white/55 hover:text-white',
+              )}
+            >
+              <span className="block text-xs font-semibold tracking-wide uppercase">{item.label}</span>
+              <span className="block text-[10px] opacity-70">{periodRangeLabel(item.id, now)}</span>
+            </button>
+          ))}
+        </div>
       </div>
     </header>
   );

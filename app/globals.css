@@ -65,6 +65,28 @@
   display: none;
 }
 
+/* scroll-fade: dissolve a borda do conteudo rolavel conforme a posicao da
+   rolagem, indicando que ha mais conteudo para o lado.
+   Dissolve via mask em vez de sobrepor uma cor, entao funciona sobre qualquer
+   fundo — inclusive a textura. As duas variaveis sao alimentadas pelo hook
+   useScrollFade; sem elas (0px) nenhum fade aparece. */
+.scroll-fade-x {
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent 0px,
+    #000 var(--scroll-fade-start, 0px),
+    #000 calc(100% - var(--scroll-fade-end, 0px)),
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to right,
+    transparent 0px,
+    #000 var(--scroll-fade-start, 0px),
+    #000 calc(100% - var(--scroll-fade-end, 0px)),
+    transparent 100%
+  );
+}
+
 @keyframes fade-in {
   from {
     opacity: 0;
