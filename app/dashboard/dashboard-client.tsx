@@ -342,7 +342,7 @@ function Header({
       <div
         role="tablist"
         aria-label="Filtro de periodo"
-        className="glass-panel flex gap-1 overflow-x-auto rounded-xl p-1"
+        className="glass-panel no-scrollbar flex gap-1 overflow-x-auto rounded-xl p-1"
       >
         {PERIODS.map((item) => (
           <button
