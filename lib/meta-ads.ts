@@ -21,6 +21,9 @@ export type AdsResponse = {
   series: { key: string; spend: number }[];
   campaigns: { name: string; spend: number; clicks: number; results: number }[];
   followers?: number;
+  /** Seguidores ganhos no periodo (como o Business Suite). Requer permissao
+   *  instagram_manage_insights no token; sem ela, fica indefinido. */
+  followersGained?: number;
   followersHandle?: string;
   fetchedAt: string;
 };
@@ -80,22 +83,67 @@ const num = (v?: string) => (v ? Number(v) : 0);
 const linkClicks = (row: InsightRow) =>
   num(row.actions?.find((a) => a.action_type === 'link_click')?.value);
 
-async function fetchFollowers(token: string): Promise<{ followers?: number; handle?: string }> {
+async function fetchFollowers(
+  token: string,
+): Promise<{ followers?: number; handle?: string; igId?: string }> {
   try {
     const data = (await graph(
       'me/accounts',
-      { fields: 'instagram_business_account{username,followers_count}' },
+      { fields: 'instagram_business_account{id,username,followers_count}' },
       token,
-    )) as { data?: { instagram_business_account?: { username?: string; followers_count?: number } }[] };
+    )) as { data?: { instagram_business_account?: { id?: string; username?: string; followers_count?: number } }[] };
 
     for (const page of data.data ?? []) {
       const ig = page.instagram_business_account;
-      if (ig?.followers_count !== undefined) return { followers: ig.followers_count, handle: ig.username };
+      if (ig?.followers_count !== undefined) {
+        return { followers: ig.followers_count, handle: ig.username, igId: ig.id };
+      }
     }
   } catch {
     // Seguidores e um "extra": se falhar, o resto do painel ainda vale.
   }
   return {};
+}
+
+/** Janela (em segundos Unix) de cada periodo para o crescimento de seguidores. */
+function growthWindow(period: PeriodId): { since: number; until: number } {
+  const day = 86400;
+  const now = Math.floor(Date.now() / 1000);
+  switch (period) {
+    case 'today':
+      return { since: now - day, until: now };
+    case 'yesterday':
+      return { since: now - 2 * day, until: now - day };
+    case '7d':
+      return { since: now - 7 * day, until: now };
+    case '14d':
+      return { since: now - 14 * day, until: now };
+    case 'all':
+      // follower_count so retorna ate 30 dias — limite da API.
+      return { since: now - 30 * day, until: now };
+  }
+}
+
+/** Seguidores ganhos (liquido) no periodo, via IG insights follower_count.
+ *  Requer instagram_manage_insights; sem a permissao, retorna undefined. */
+async function fetchFollowerGrowth(
+  igId: string,
+  period: PeriodId,
+  token: string,
+): Promise<number | undefined> {
+  const { since, until } = growthWindow(period);
+  try {
+    const data = (await graph(
+      `${igId}/insights`,
+      { metric: 'follower_count', period: 'day', since: String(since), until: String(until) },
+      token,
+    )) as { data?: { values?: { value?: number }[] }[] };
+    const values = data.data?.[0]?.values ?? [];
+    return values.reduce((sum, v) => sum + (v.value ?? 0), 0);
+  } catch {
+    // Sem permissao de insights do IG: o painel cai para o total de seguidores.
+    return undefined;
+  }
 }
 
 // Cache simples em memoria (por instancia), chaveado por periodo.
@@ -148,12 +196,16 @@ export async function fetchMetaAds(period: PeriodId): Promise<AdsResponse> {
       .sort((a, b) => b.spend - a.spend);
   }
 
+  // Seguidores ganhos no periodo (se o token tiver permissao de insights do IG).
+  const followersGained = follow.igId ? await fetchFollowerGrowth(follow.igId, period, token) : undefined;
+
   const value: AdsResponse = {
     sample: false,
     totals,
     series,
     campaigns,
     followers: follow.followers,
+    followersGained,
     followersHandle: follow.handle,
     fetchedAt: new Date().toISOString(),
   };

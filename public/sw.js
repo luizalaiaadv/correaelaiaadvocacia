@@ -6,7 +6,7 @@
 
 // A textura de fundo e cacheada por URL: sempre que ela mudar, suba a versao
 // aqui, senao apps ja instalados continuam mostrando a imagem antiga.
-const CACHE = 'cl-leads-v3';
+const CACHE = 'cl-leads-v4';
 const OFFLINE_URL = '/offline.html';
 
 const PRECACHE = [OFFLINE_URL, '/texture-bg.webp', '/icon-192.png', '/icon-512.png', '/logofooter.webp'];
@@ -46,22 +46,21 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Assets estaticos: cache primeiro, com atualizacao em segundo plano.
+  // Assets estaticos e casca: REDE PRIMEIRO, cache so como reserva offline.
+  // Antes era "cache primeiro", e isso servia o JS antigo quando o bundle mudava
+  // — a tela ficava com codigo velho e os dados pareciam nao atualizar.
   const isStatic = url.pathname.startsWith('/_next/static/') || PRECACHE.includes(url.pathname);
   if (!isStatic) return;
 
   event.respondWith(
-    caches.match(request).then((cached) => {
-      const network = fetch(request)
-        .then((response) => {
-          if (response.ok) {
-            const copy = response.clone();
-            caches.open(CACHE).then((cache) => cache.put(request, copy));
-          }
-          return response;
-        })
-        .catch(() => cached);
-      return cached || network;
-    }),
+    fetch(request)
+      .then((response) => {
+        if (response.ok) {
+          const copy = response.clone();
+          caches.open(CACHE).then((cache) => cache.put(request, copy));
+        }
+        return response;
+      })
+      .catch(() => caches.match(request)),
   );
 });
