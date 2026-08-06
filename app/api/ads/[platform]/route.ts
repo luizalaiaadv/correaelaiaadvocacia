@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { fetchMetaAds, MetaConfigError } from '@/lib/meta-ads';
-import { sampleResponse } from '@/app/_ads/sample';
+import { fetchGoogleAds, GoogleConfigError } from '@/lib/google-ads';
 import type { PeriodId } from '@/app/dashboard/lead-utils';
 
 export const dynamic = 'force-dynamic';
@@ -22,13 +22,13 @@ export async function GET(
       return NextResponse.json(data, { headers: { 'Cache-Control': 'no-store' } });
     }
     if (platform === 'google') {
-      // Ainda sem API real: dados de exemplo no mesmo formato.
-      return NextResponse.json(sampleResponse('google', period), { headers: { 'Cache-Control': 'no-store' } });
+      const data = await fetchGoogleAds(period);
+      return NextResponse.json(data, { headers: { 'Cache-Control': 'no-store' } });
     }
     return NextResponse.json({ error: 'Plataforma invalida.' }, { status: 404 });
   } catch (error) {
     console.error('[api/ads]', error);
-    if (error instanceof MetaConfigError) {
+    if (error instanceof MetaConfigError || error instanceof GoogleConfigError) {
       return NextResponse.json(
         { error: `Configuracao ausente no servidor: ${error.missing.join(', ')}.`, code: 'config_missing' },
         { status: 500 },
