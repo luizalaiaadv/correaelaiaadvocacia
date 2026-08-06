@@ -43,7 +43,6 @@ import {
 import { requestNotificationPermission, useLeadNotifications } from './use-lead-notifications';
 import { useScrollFade } from './use-scroll-fade';
 import { useContactedLeads } from './use-contacted-leads';
-import DashboardSwitcher from '../_ads/dashboard-switcher';
 import LeadDetailsModal from './lead-details-modal';
 
 const REFRESH_MS = 10_000;
@@ -172,7 +171,7 @@ export default function DashboardClient() {
       const response = await fetch('/api/leads', { cache: 'no-store' });
 
       if (response.status === 401) {
-        router.replace('/dashboard/login');
+        router.replace('/dash-ads/login');
         return;
       }
 
@@ -218,7 +217,7 @@ export default function DashboardClient() {
 
   async function handleLogout() {
     await fetch('/api/dashboard-auth', { method: 'DELETE' });
-    router.replace('/dashboard/login');
+    router.replace('/dash-ads/login');
   }
 
   const stats = useMemo(() => {
@@ -460,10 +459,6 @@ function Header({
             <LogOut className="size-4" aria-hidden />
           </button>
         </div>
-      </div>
-
-      <div className="mb-3">
-        <DashboardSwitcher />
       </div>
 
       <div role="tablist" aria-label="Secoes do dashboard" className="mb-3 flex gap-2">

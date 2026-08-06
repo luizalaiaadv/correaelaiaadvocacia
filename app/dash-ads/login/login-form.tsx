@@ -30,7 +30,8 @@ export default function LoginForm() {
         return;
       }
 
-      router.replace('/dashboard');
+      // Entra pelo painel de anuncios (seletor Meta/Google dentro).
+      router.replace('/dash-ads');
       router.refresh();
     } catch {
       setError('Falha de conexao. Tente novamente.');
@@ -40,10 +41,7 @@ export default function LoginForm() {
   }
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="glass-panel w-full max-w-sm p-8"
-    >
+    <form onSubmit={handleSubmit} className="glass-panel w-full max-w-sm p-8">
       <div className="mb-6 flex flex-col items-center text-center">
         <Image
           src={imgLogo}
@@ -54,7 +52,7 @@ export default function LoginForm() {
         />
         <h1 className="flex items-center gap-2 font-display text-xl text-accent">
           <Lock className="size-4 text-secondary" aria-hidden />
-          Dashboard de Leads
+          Painel do Cliente
         </h1>
       </div>
 

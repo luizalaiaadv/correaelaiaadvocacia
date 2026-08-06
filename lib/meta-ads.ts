@@ -1,7 +1,7 @@
 import type { PeriodId } from '@/app/dashboard/lead-utils';
 
 /**
- * Leitura da Meta Marketing API para o dashboard /dash-meta. Server-side apenas
+ * Leitura da Meta Marketing API para o painel /dash-ads. Server-side apenas
  * (usa o token secreto). Sem SDK: a Graph API resolve com fetch puro.
  */
 

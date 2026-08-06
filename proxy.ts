@@ -1,7 +1,9 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { SESSION_COOKIE, safeEqual, sessionToken } from './lib/dashboard-auth';
 
-const LOGIN_PATH = '/dashboard/login';
+const LOGIN_PATH = '/dash-ads/login';
+// Painel de anuncios: uma rota so, com seletor Meta/Google dentro.
+const HOME_PATH = '/dash-ads';
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -19,7 +21,7 @@ export async function proxy(request: NextRequest) {
 
   if (pathname === LOGIN_PATH) {
     if (isAuthenticated) {
-      return NextResponse.redirect(new URL('/dashboard', request.url));
+      return NextResponse.redirect(new URL(HOME_PATH, request.url));
     }
     return NextResponse.next();
   }
@@ -34,5 +36,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/dashboard/:path*', '/dash-meta/:path*', '/dash-google/:path*', '/api/leads', '/api/contacted', '/api/ads/:path*'],
+  matcher: ['/dashboard/:path*', '/dash-ads/:path*', '/api/leads', '/api/contacted', '/api/ads/:path*'],
 };

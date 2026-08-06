@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-export default function DashboardLoginPage() {
+export default function DashAdsLoginPage() {
   return (
     <main className="relative flex min-h-screen items-center justify-center px-4 py-12">
       <div aria-hidden className="fixed inset-0 -z-10">

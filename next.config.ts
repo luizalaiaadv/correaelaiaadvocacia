@@ -18,6 +18,19 @@ const config: NextConfig = {
     optimizePackageImports: ['motion', 'lucide-react', '@typebot.io/react'],
     optimizeCss: true,
   },
+  async redirects() {
+    return [
+      // A raiz passa a levar ao painel. Os anuncios vao para o Instagram/Facebook
+      // e para o link proprio do Typebot, entao a landing nao e mais o destino
+      // do trafego. Redirect temporario (307) — reversivel se um dia a landing
+      // publica voltar a ser necessaria.
+      { source: '/', destination: '/dash-ads', permanent: false },
+      // Rotas antigas -> painel unico, para links/marcadores existentes.
+      { source: '/dash-meta', destination: '/dash-ads', permanent: false },
+      { source: '/dash-google', destination: '/dash-ads', permanent: false },
+      { source: '/dashboard/login', destination: '/dash-ads/login', permanent: false },
+    ];
+  },
 };
 
 export default config;

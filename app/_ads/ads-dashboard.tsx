@@ -5,9 +5,11 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import {
   BadgeInfo,
+  Chrome,
   CircleAlert,
   CircleDollarSign,
   Eye,
+  Facebook,
   LogOut,
   MousePointerClick,
   Percent,
@@ -21,7 +23,6 @@ import type { AdsResponse } from '@/lib/meta-ads';
 import { cn } from '@/lib/utils';
 import { PERIODS, type PeriodId } from '../dashboard/lead-utils';
 import { useScrollFade } from '../dashboard/use-scroll-fade';
-import DashboardSwitcher from './dashboard-switcher';
 import { PLATFORMS, type PlatformId } from './config';
 import {
   adsPeriodRangeLabel,
@@ -33,8 +34,10 @@ import {
   formatShortDate,
 } from './ads-utils';
 
-export default function AdsDashboard({ platform }: { platform: PlatformId }) {
+export default function AdsDashboard() {
   const router = useRouter();
+  // Plataforma escolhida dentro da propria pagina (Meta abre por padrao).
+  const [platform, setPlatform] = useState<PlatformId>('meta');
   const config = PLATFORMS[platform];
   const [period, setPeriod] = useState<PeriodId>('7d');
   const [now] = useState(() => Date.now());
@@ -50,7 +53,7 @@ export default function AdsDashboard({ platform }: { platform: PlatformId }) {
         cache: 'no-store',
       });
       if (response.status === 401) {
-        router.replace('/dashboard/login');
+        router.replace('/dash-ads/login');
         return;
       }
       const json = (await response.json()) as AdsResponse & { error?: string };
@@ -73,7 +76,7 @@ export default function AdsDashboard({ platform }: { platform: PlatformId }) {
 
   async function handleLogout() {
     await fetch('/api/dashboard-auth', { method: 'DELETE' });
-    router.replace('/dashboard/login');
+    router.replace('/dash-ads/login');
   }
 
   const totals = data?.totals;
@@ -85,7 +88,12 @@ export default function AdsDashboard({ platform }: { platform: PlatformId }) {
 
   const periodLabel = `${PERIODS.find((p) => p.id === period)?.label} - ${adsPeriodRangeLabel(period, now)}`;
 
-  const kpis: { label: string; value: string | null; caption?: string; icon: React.ReactNode }[] = [
+  const kpis: {
+    label: string;
+    value: string | null;
+    caption?: string;
+    icon: React.ReactNode;
+  }[] = [
     {
       label: 'Investimento',
       value: totals ? formatBRL(totals.spend) : null,
@@ -130,8 +138,14 @@ export default function AdsDashboard({ platform }: { platform: PlatformId }) {
     const gained = data.followersGained;
     kpis.push({
       label: 'Seguidores',
-      value: gained !== undefined ? `${gained >= 0 ? '+' : ''}${formatInt(gained)}` : formatInt(data.followers),
-      caption: gained !== undefined ? `${formatInt(data.followers)} no total` : undefined,
+      value:
+        gained !== undefined
+          ? `${gained >= 0 ? '+' : ''}${formatInt(gained)}`
+          : formatInt(data.followers),
+      caption:
+        gained !== undefined
+          ? `${formatInt(data.followers)} no total`
+          : undefined,
       icon: <Users className="size-4" aria-hidden />,
     });
   }
@@ -198,8 +212,32 @@ export default function AdsDashboard({ platform }: { platform: PlatformId }) {
             </div>
           </div>
 
-          <div className="mb-3">
-            <DashboardSwitcher />
+          {/* Seletor de plataforma dentro da propria pagina. */}
+          <div
+            role="tablist"
+            aria-label="Plataforma"
+            className="glass-panel mb-3 flex gap-1 rounded-xl p-1"
+          >
+            {(
+              [
+                { id: 'meta', label: 'Meta', icon: Facebook },
+                { id: 'google', label: 'Google', icon: Chrome },
+              ] as const
+            ).map(({ id, label, icon: Icon }) => (
+              <button
+                key={id}
+                role="tab"
+                aria-selected={platform === id}
+                onClick={() => setPlatform(id)}
+                className={cn(
+                  'flex flex-1 items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition sm:flex-none',
+                  platform === id ? 'bg-accent text-[#0f1020]' : 'text-white/55 hover:text-white',
+                )}
+              >
+                <Icon className="size-4" aria-hidden />
+                {label}
+              </button>
+            ))}
           </div>
 
           <div className="glass-panel rounded-xl p-1">
@@ -375,7 +413,11 @@ function StatCard({
             <p className="font-display text-2xl leading-none text-accent sm:text-3xl">
               {value}
             </p>
-            {caption && <p className="mt-1.5 text-[11px] tracking-wide text-white/40 uppercase">{caption}</p>}
+            {caption && (
+              <p className="mt-1.5 text-[11px] tracking-wide text-white/40 uppercase">
+                {caption}
+              </p>
+            )}
           </>
         )}
       </div>
