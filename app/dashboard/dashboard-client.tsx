@@ -42,6 +42,7 @@ import {
 } from './lead-utils';
 import { requestNotificationPermission, useLeadNotifications } from './use-lead-notifications';
 import { useScrollFade } from './use-scroll-fade';
+import { useSessionKeepAlive } from './use-session-keepalive';
 import { useContactedLeads } from './use-contacted-leads';
 import LeadDetailsModal from './lead-details-modal';
 
@@ -152,6 +153,8 @@ function AccentDecor({ accent }: { accent: Accent }) {
 
 export default function DashboardClient() {
   const router = useRouter();
+  // Desliza a sessao em atividade real; sem interacao por 30 min = deslogado.
+  useSessionKeepAlive();
   const [leads, setLeads] = useState<Lead[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);

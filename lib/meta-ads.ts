@@ -97,32 +97,50 @@ async function fetchFollowers(
   return {};
 }
 
-/** Janela (segundos Unix) para o crescimento de seguidores — mesma do resto do
- *  painel (fuso Sao Paulo, terminando ontem). follower_count so cobre 30 dias. */
-function growthWindow(period: PeriodId): { since: number; until: number } {
-  const { since, until } = adsPeriodDateRange(period);
-  // Sao Paulo e UTC-3 (sem horario de verao desde 2019).
-  const ts = (d: string, endOfDay = false) =>
-    Math.floor(new Date(`${d}T${endOfDay ? '23:59:59' : '00:00:00'}-03:00`).getTime() / 1000);
-  return { since: ts(since), until: ts(until, true) };
-}
+const DAY_S = 86400;
+/** Sao Paulo e UTC-3 (sem horario de verao desde 2019). */
+const spTs = (d: string, endOfDay = false) =>
+  Math.floor(new Date(`${d}T${endOfDay ? '23:59:59' : '00:00:00'}-03:00`).getTime() / 1000);
 
-/** Seguidores ganhos (liquido) no periodo, via IG insights follower_count.
- *  Requer instagram_manage_insights; sem a permissao, retorna undefined. */
+/**
+ * Seguidores ganhos (liquido) no periodo, via IG insights follower_count.
+ *
+ * Cuidado de fuso: o follower_count bucketiza por dia do PACIFICO (end_time as
+ * ~07:00 UTC), e o end_time e o fim EXCLUSIVO do dia. Uma janela ingenua em
+ * Sao Paulo pega o bucket do dia errado (era o bug do filtro "Ontem"). Por isso
+ * consultamos uma janela folgada e somamos so os buckets cujo DIA REPRESENTADO
+ * (end_time - 1 dia) cai no periodo pedido — mesma logica que o gerenciador usa.
+ * Requer instagram_manage_insights; sem a permissao, retorna undefined.
+ */
 async function fetchFollowerGrowth(
   igId: string,
   period: PeriodId,
   token: string,
 ): Promise<number | undefined> {
-  const { since, until } = growthWindow(period);
+  const { since, until } = adsPeriodDateRange(period);
+  // Folga de meio dia dos dois lados para nao perder o bucket do Pacifico; limita
+  // a 30 dias, que e o maximo que o follower_count cobre.
+  const untilTs = spTs(until, true) + DAY_S / 2;
+  const sinceTs = Math.max(spTs(since) - DAY_S / 2, untilTs - 30 * DAY_S);
+
   try {
     const data = (await graph(
       `${igId}/insights`,
-      { metric: 'follower_count', period: 'day', since: String(since), until: String(until) },
+      { metric: 'follower_count', period: 'day', since: String(sinceTs), until: String(untilTs) },
       token,
-    )) as { data?: { values?: { value?: number }[] }[] };
+    )) as { data?: { values?: { value?: number; end_time?: string }[] }[] };
+
     const values = data.data?.[0]?.values ?? [];
-    return values.reduce((sum, v) => sum + (v.value ?? 0), 0);
+    if (values.length === 0) return undefined;
+
+    let sum = 0;
+    for (const v of values) {
+      if (!v.end_time) continue;
+      // Dia representado = end_time menos 1 dia, como data (YYYY-MM-DD).
+      const repDate = new Date(new Date(v.end_time).getTime() - DAY_S * 1000).toISOString().slice(0, 10);
+      if (repDate >= since && repDate <= until) sum += v.value ?? 0;
+    }
+    return sum;
   } catch {
     // Sem permissao de insights do IG: o painel cai para o total de seguidores.
     return undefined;

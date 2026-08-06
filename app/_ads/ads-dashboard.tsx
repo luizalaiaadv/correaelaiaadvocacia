@@ -23,6 +23,7 @@ import type { AdsResponse } from '@/lib/meta-ads';
 import { cn } from '@/lib/utils';
 import { PERIODS, type PeriodId } from '../dashboard/lead-utils';
 import { useScrollFade } from '../dashboard/use-scroll-fade';
+import { useSessionKeepAlive } from '../dashboard/use-session-keepalive';
 import { PLATFORMS, type PlatformId } from './config';
 import {
   adsPeriodRangeLabel,
@@ -36,6 +37,8 @@ import {
 
 export default function AdsDashboard() {
   const router = useRouter();
+  // Desliza a sessao em atividade real; sem interacao por 30 min = deslogado.
+  useSessionKeepAlive();
   // Plataforma escolhida dentro da propria pagina (Meta abre por padrao).
   const [platform, setPlatform] = useState<PlatformId>('meta');
   const config = PLATFORMS[platform];
@@ -84,7 +87,6 @@ export default function AdsDashboard() {
     totals && totals.impressions > 0 ? totals.clicks / totals.impressions : 0;
   const cpc = totals && totals.clicks > 0 ? totals.spend / totals.clicks : 0;
   const cpa = totals && totals.results > 0 ? totals.spend / totals.results : 0;
-  const resultAo = config.resultLabel.toLowerCase().replace(/es$/, 'ao');
 
   const periodLabel = `${PERIODS.find((p) => p.id === period)?.label} - ${adsPeriodRangeLabel(period, now)}`;
 
@@ -93,41 +95,49 @@ export default function AdsDashboard() {
     value: string | null;
     caption?: string;
     icon: React.ReactNode;
+    accent: CardAccent;
   }[] = [
     {
       label: 'Investimento',
       value: totals ? formatBRL(totals.spend) : null,
       icon: <CircleDollarSign className="size-4" aria-hidden />,
+      accent: METRIC_ACCENTS.amber,
     },
     {
       label: 'Impressões',
       value: totals ? formatCompact(totals.impressions) : null,
       icon: <Eye className="size-4" aria-hidden />,
+      accent: METRIC_ACCENTS.sky,
     },
     {
       label: 'Cliques',
       value: totals ? formatInt(totals.clicks) : null,
       icon: <MousePointerClick className="size-4" aria-hidden />,
+      accent: METRIC_ACCENTS.rose,
     },
     {
       label: 'CTR',
       value: totals ? formatPercent(ctr) : null,
       icon: <Percent className="size-4" aria-hidden />,
+      accent: METRIC_ACCENTS.emerald,
     },
     {
       label: 'CPC médio',
       value: totals ? formatBRL(cpc) : null,
       icon: <TrendingUp className="size-4" aria-hidden />,
+      accent: METRIC_ACCENTS.orange,
     },
     {
       label: config.resultLabel,
       value: totals ? formatInt(totals.results) : null,
       icon: <Target className="size-4" aria-hidden />,
+      accent: METRIC_ACCENTS.blue,
     },
     {
-      label: `Custo/${resultAo}`,
+      label: `Custo/${config.resultSingular}`,
       value: totals ? formatBRL(cpa) : null,
       icon: <CircleDollarSign className="size-4" aria-hidden />,
+      accent: METRIC_ACCENTS.pink,
     },
   ];
 
@@ -147,6 +157,7 @@ export default function AdsDashboard() {
           ? `${formatInt(data.followers)} no total`
           : undefined,
       icon: <Users className="size-4" aria-hidden />,
+      accent: METRIC_ACCENTS.teal,
     });
   }
 
@@ -298,7 +309,7 @@ export default function AdsDashboard() {
               value={kpi.value}
               caption={kpi.caption}
               icon={kpi.icon}
-              accent={config.accent}
+              accent={kpi.accent}
               loading={isLoading}
             />
           ))}
@@ -346,7 +357,27 @@ export default function AdsDashboard() {
 
 type Accent = (typeof PLATFORMS)[PlatformId]['accent'];
 
-function AccentDecor({ accent }: { accent: Accent }) {
+/** Cor de um card: chip do icone, brilho, fio no topo e barra lateral. */
+type CardAccent = { chip: string; glow: string; rule: string; edge: string };
+
+/**
+ * Uma cor por metrica, para diferenciar os cards de relance (antes ficava tudo
+ * azul no Meta / tudo verde no Google). Paleta categorica alternando quente/frio
+ * para vizinhos contrastarem; a identidade da plataforma fica no badge e nas
+ * barras do grafico. Sem roxo.
+ */
+const METRIC_ACCENTS: Record<string, CardAccent> = {
+  amber: { chip: 'bg-amber-400/30 text-amber-200', glow: 'bg-amber-400/35', rule: 'via-amber-300/90', edge: 'bg-amber-400' },
+  sky: { chip: 'bg-sky-400/30 text-sky-200', glow: 'bg-sky-400/35', rule: 'via-sky-300/90', edge: 'bg-sky-400' },
+  rose: { chip: 'bg-rose-500/30 text-rose-200', glow: 'bg-rose-500/35', rule: 'via-rose-400/90', edge: 'bg-rose-400' },
+  emerald: { chip: 'bg-emerald-500/30 text-emerald-200', glow: 'bg-emerald-500/35', rule: 'via-emerald-400/90', edge: 'bg-emerald-400' },
+  orange: { chip: 'bg-orange-400/30 text-orange-200', glow: 'bg-orange-400/35', rule: 'via-orange-300/90', edge: 'bg-orange-400' },
+  blue: { chip: 'bg-blue-500/30 text-blue-200', glow: 'bg-blue-500/35', rule: 'via-blue-400/90', edge: 'bg-blue-400' },
+  pink: { chip: 'bg-pink-500/30 text-pink-200', glow: 'bg-pink-500/35', rule: 'via-pink-400/90', edge: 'bg-pink-400' },
+  teal: { chip: 'bg-teal-400/30 text-teal-200', glow: 'bg-teal-400/35', rule: 'via-teal-300/90', edge: 'bg-teal-400' },
+};
+
+function AccentDecor({ accent }: { accent: CardAccent }) {
   return (
     <>
       <div
@@ -386,7 +417,7 @@ function StatCard({
   value: string | null;
   caption?: string;
   icon: React.ReactNode;
-  accent: Accent;
+  accent: CardAccent;
   loading: boolean;
 }) {
   return (

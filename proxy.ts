@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from 'next/server';
-import { SESSION_COOKIE, safeEqual, sessionToken } from './lib/dashboard-auth';
+import { SESSION_COOKIE, verifySession } from './lib/dashboard-auth';
 
 const LOGIN_PATH = '/dash-ads/login';
 // Painel de anuncios: uma rota so, com seletor Meta/Google dentro.
@@ -17,7 +17,7 @@ export async function proxy(request: NextRequest) {
   }
 
   const cookie = request.cookies.get(SESSION_COOKIE)?.value ?? '';
-  const isAuthenticated = safeEqual(cookie, await sessionToken(password));
+  const isAuthenticated = await verifySession(cookie, password);
 
   if (pathname === LOGIN_PATH) {
     if (isAuthenticated) {

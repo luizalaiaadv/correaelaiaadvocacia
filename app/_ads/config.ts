@@ -20,10 +20,10 @@ export type PlatformConfig = {
   id: PlatformId;
   label: string;
   short: string;
-  /** Rotulo do "resultado" de conversao — muda entre as plataformas. */
+  /** Rotulo do "resultado" (plural) e a forma singular, para "Custo/{singular}". */
   resultLabel: string;
+  resultSingular: string;
   accent: PlatformAccent;
-  campaignNames: string[];
 };
 
 export const PLATFORMS: Record<PlatformId, PlatformConfig> = {
@@ -32,6 +32,7 @@ export const PLATFORMS: Record<PlatformId, PlatformConfig> = {
     label: 'Meta Ads',
     short: 'Meta',
     resultLabel: 'Resultados',
+    resultSingular: 'resultado',
     accent: {
       badge: 'bg-[#0866FF]/20 text-[#7fb0ff] border-[#0866FF]/40',
       chip: 'bg-[#0866FF]/25 text-[#7fb0ff]',
@@ -41,18 +42,13 @@ export const PLATFORMS: Record<PlatformId, PlatformConfig> = {
       bar: 'bg-[#2b6fff]',
       barHover: 'group-hover:bg-[#7fb0ff]',
     },
-    campaignNames: [
-      'Trabalhista - Reels Video',
-      'Rescisao Indireta - Estatico',
-      'Verbas Rescisorias - Carrossel',
-      'Remarketing - Site',
-    ],
   },
   google: {
     id: 'google',
     label: 'Google Ads',
     short: 'Google',
-    resultLabel: 'Conversoes',
+    resultLabel: 'Conversões',
+    resultSingular: 'conversão',
     accent: {
       badge: 'bg-[#1a9e5b]/20 text-[#5fce87] border-[#1a9e5b]/40',
       chip: 'bg-[#1a9e5b]/25 text-[#5fce87]',
@@ -62,11 +58,5 @@ export const PLATFORMS: Record<PlatformId, PlatformConfig> = {
       bar: 'bg-[#1f9d57]',
       barHover: 'group-hover:bg-[#5fce87]',
     },
-    campaignNames: [
-      'Search - Advogado Trabalhista BH',
-      'Search - Calculo Rescisao',
-      'PMax - Direitos Trabalhistas',
-      'Search - Marca',
-    ],
   },
 };
