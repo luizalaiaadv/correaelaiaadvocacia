@@ -51,6 +51,8 @@ function datePreset(period: PeriodId): string {
       return 'last_7d';
     case '14d':
       return 'last_14d';
+    case '30d':
+      return 'last_30d';
     case 'all':
       return 'maximum';
   }
@@ -118,6 +120,8 @@ function growthWindow(period: PeriodId): { since: number; until: number } {
       return { since: now - 7 * day, until: now };
     case '14d':
       return { since: now - 14 * day, until: now };
+    case '30d':
+      return { since: now - 30 * day, until: now };
     case 'all':
       // follower_count so retorna ate 30 dias — limite da API.
       return { since: now - 30 * day, until: now };

@@ -78,18 +78,31 @@ export const PERIODS = [
   { id: 'yesterday', label: 'Ontem', days: 1 },
   { id: '7d', label: '7 dias', days: 7 },
   { id: '14d', label: '14 dias', days: 14 },
+  { id: '30d', label: '30 dias', days: 30 },
   { id: 'all', label: 'Todo o periodo', days: 0 },
 ] as const;
 
 export type PeriodId = (typeof PERIODS)[number]['id'];
+
+/** Numero de dias dos filtros de janela (7d/14d/30d). Chamado so apos excluir
+ *  today/yesterday/all. */
+export function periodWindowDays(period: PeriodId): number {
+  switch (period) {
+    case '7d':
+      return 7;
+    case '30d':
+      return 30;
+    default:
+      return 14;
+  }
+}
 
 /** Rotulo com o intervalo de datas coberto pelo filtro, exibido abaixo do nome. */
 export function periodRangeLabel(period: PeriodId, now = Date.now()): string {
   if (period === 'all') return 'todos os leads';
   if (period === 'today') return formatFullDate(dayKey(new Date(now)));
   if (period === 'yesterday') return formatFullDate(dayKey(new Date(now - DAY_MS)));
-  const days = period === '7d' ? 7 : 14;
-  const keys = dayKeysBack(days, now);
+  const keys = dayKeysBack(periodWindowDays(period), now);
   return `${formatShortDate(keys[0])} - ${formatShortDate(keys[keys.length - 1])}`;
 }
 
@@ -101,7 +114,7 @@ export function filterByPeriod(leads: Lead[], period: PeriodId, now = Date.now()
     return leads.filter((lead) => dayKey(new Date(lead.createdAt)) === target);
   }
 
-  const allowed = new Set(dayKeysBack(period === '7d' ? 7 : 14, now));
+  const allowed = new Set(dayKeysBack(periodWindowDays(period), now));
   return leads.filter((lead) => allowed.has(dayKey(new Date(lead.createdAt))));
 }
 

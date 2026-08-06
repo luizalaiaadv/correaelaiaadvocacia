@@ -227,7 +227,7 @@ export default function DashboardClient() {
 
     const todayCount = all.filter((lead) => dayKey(new Date(lead.createdAt)) === todayKey).length;
     const yesterdayCount = all.filter((lead) => dayKey(new Date(lead.createdAt)) === yesterdayKey).length;
-    const chartDays = period === '14d' || period === 'all' ? 14 : 7;
+    const chartDays = period === '30d' ? 30 : period === '14d' || period === 'all' ? 14 : 7;
 
     return {
       total: all.length,

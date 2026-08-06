@@ -5,7 +5,7 @@ import type { PeriodId } from '@/app/dashboard/lead-utils';
 
 export const dynamic = 'force-dynamic';
 
-const PERIODS: PeriodId[] = ['today', 'yesterday', '7d', '14d', 'all'];
+const PERIODS: PeriodId[] = ['today', 'yesterday', '7d', '14d', '30d', 'all'];
 
 export async function GET(
   request: Request,

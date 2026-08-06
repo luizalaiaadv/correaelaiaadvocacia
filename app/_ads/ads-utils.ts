@@ -1,4 +1,12 @@
-import { dayKey, dayKeysBack, formatFullDate, formatShortDate, DAY_MS, type PeriodId } from '../dashboard/lead-utils';
+import {
+  dayKey,
+  dayKeysBack,
+  formatFullDate,
+  formatShortDate,
+  periodWindowDays,
+  DAY_MS,
+  type PeriodId,
+} from '../dashboard/lead-utils';
 
 const brl = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
 const brlCompact = new Intl.NumberFormat('pt-BR', {
@@ -21,8 +29,7 @@ export function adsPeriodRangeLabel(period: PeriodId, now = Date.now()): string 
   if (period === 'all') return 'todo o periodo';
   if (period === 'today') return formatFullDate(dayKey(new Date(now)));
   if (period === 'yesterday') return formatFullDate(dayKey(new Date(now - DAY_MS)));
-  const days = period === '7d' ? 7 : 14;
-  const keys = dayKeysBack(days, now);
+  const keys = dayKeysBack(periodWindowDays(period), now);
   return `${formatShortDate(keys[0])} - ${formatShortDate(keys[keys.length - 1])}`;
 }
 

@@ -134,10 +134,12 @@ function dateRange(period: PeriodId, now = Date.now()): { since: string; until: 
       return { since: dateKey(new Date(now - 6 * day)), until: today };
     case '14d':
       return { since: dateKey(new Date(now - 13 * day)), until: today };
+    case '30d':
+      return { since: dateKey(new Date(now - 29 * day)), until: today };
     case 'all':
       // Janela larga o bastante para "todo o periodo", mas finita (exigencia da API)
       // e usavel no grafico.
-      return { since: dateKey(new Date(now - 29 * day)), until: today };
+      return { since: dateKey(new Date(now - 89 * day)), until: today };
   }
 }
 
