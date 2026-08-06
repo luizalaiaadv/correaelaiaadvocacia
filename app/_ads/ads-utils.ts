@@ -1,9 +1,8 @@
 import {
+  adsPeriodDateRange,
   dayKey,
-  dayKeysBack,
   formatFullDate,
   formatShortDate,
-  periodWindowDays,
   DAY_MS,
   type PeriodId,
 } from '../dashboard/lead-utils';
@@ -24,13 +23,13 @@ export const formatInt = (value: number) => int.format(value);
 export const formatCompact = (value: number) => compact.format(value);
 export const formatPercent = (value: number) => `${(value * 100).toLocaleString('pt-BR', { maximumFractionDigits: 2 })}%`;
 
-/** Igual ao dos leads, mas com texto neutro no "todo o periodo". */
+/** Rotulo do intervalo — reflete exatamente a janela usada nos dados de ads. */
 export function adsPeriodRangeLabel(period: PeriodId, now = Date.now()): string {
   if (period === 'all') return 'todo o periodo';
   if (period === 'today') return formatFullDate(dayKey(new Date(now)));
   if (period === 'yesterday') return formatFullDate(dayKey(new Date(now - DAY_MS)));
-  const keys = dayKeysBack(periodWindowDays(period), now);
-  return `${formatShortDate(keys[0])} - ${formatShortDate(keys[keys.length - 1])}`;
+  const { since, until } = adsPeriodDateRange(period, now);
+  return `${formatShortDate(since)} - ${formatShortDate(until)}`;
 }
 
 export { formatShortDate };

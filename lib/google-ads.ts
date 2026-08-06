@@ -1,4 +1,4 @@
-import type { PeriodId } from '@/app/dashboard/lead-utils';
+import { adsPeriodDateRange, type PeriodId } from '@/app/dashboard/lead-utils';
 import type { AdsResponse } from '@/lib/meta-ads';
 
 /**
@@ -115,34 +115,6 @@ async function gaql(cfg: ReturnType<typeof config>, token: string, query: string
   throw new Error(`Google Ads API: ${lastError}`);
 }
 
-const TZ = 'America/Sao_Paulo';
-const dayFmt = new Intl.DateTimeFormat('en-CA', { timeZone: TZ, year: 'numeric', month: '2-digit', day: '2-digit' });
-const dateKey = (d: Date) => dayFmt.format(d);
-
-/** Janela de datas (YYYY-MM-DD) para cada periodo. */
-function dateRange(period: PeriodId, now = Date.now()): { since: string; until: string } {
-  const day = 86_400_000;
-  const today = dateKey(new Date(now));
-  switch (period) {
-    case 'today':
-      return { since: today, until: today };
-    case 'yesterday': {
-      const y = dateKey(new Date(now - day));
-      return { since: y, until: y };
-    }
-    case '7d':
-      return { since: dateKey(new Date(now - 6 * day)), until: today };
-    case '14d':
-      return { since: dateKey(new Date(now - 13 * day)), until: today };
-    case '30d':
-      return { since: dateKey(new Date(now - 29 * day)), until: today };
-    case 'all':
-      // Janela larga o bastante para "todo o periodo", mas finita (exigencia da API)
-      // e usavel no grafico.
-      return { since: dateKey(new Date(now - 89 * day)), until: today };
-  }
-}
-
 const micros = (v?: string) => (v ? Number(v) / 1e6 : 0);
 const int = (v?: string) => (v ? Number(v) : 0);
 
@@ -154,7 +126,7 @@ export async function fetchGoogleAds(period: PeriodId): Promise<AdsResponse> {
 
   const cfg = config();
   const token = await getAccessToken(cfg);
-  const { since, until } = dateRange(period);
+  const { since, until } = adsPeriodDateRange(period);
   const range = `segments.date BETWEEN '${since}' AND '${until}'`;
 
   // 1) Serie diaria (nivel conta). 2) Campanhas ATIVAS agregadas no periodo.

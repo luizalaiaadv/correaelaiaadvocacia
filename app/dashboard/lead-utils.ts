@@ -97,6 +97,31 @@ export function periodWindowDays(period: PeriodId): number {
   }
 }
 
+/**
+ * Janela {since, until} em YYYY-MM-DD (fuso Sao Paulo) para os paineis de ADS.
+ * Segue a convencao do Google/Meta: "ultimos N dias" terminam ONTEM (hoje e
+ * parcial e nao entra); "hoje"/"ontem" sao dias isolados; "todo o periodo" vai
+ * ate hoje. E o que faz o painel bater com a interface do Google Ads.
+ */
+export function adsPeriodDateRange(period: PeriodId, now = Date.now()): { since: string; until: string } {
+  const today = dayKey(new Date(now));
+  const yesterday = dayKey(new Date(now - DAY_MS));
+  switch (period) {
+    case 'today':
+      return { since: today, until: today };
+    case 'yesterday':
+      return { since: yesterday, until: yesterday };
+    case '7d':
+      return { since: dayKey(new Date(now - 7 * DAY_MS)), until: yesterday };
+    case '14d':
+      return { since: dayKey(new Date(now - 14 * DAY_MS)), until: yesterday };
+    case '30d':
+      return { since: dayKey(new Date(now - 30 * DAY_MS)), until: yesterday };
+    case 'all':
+      return { since: dayKey(new Date(now - 90 * DAY_MS)), until: today };
+  }
+}
+
 /** Rotulo com o intervalo de datas coberto pelo filtro, exibido abaixo do nome. */
 export function periodRangeLabel(period: PeriodId, now = Date.now()): string {
   if (period === 'all') return 'todos os leads';

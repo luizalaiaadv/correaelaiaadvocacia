@@ -1,4 +1,4 @@
-import type { PeriodId } from '@/app/dashboard/lead-utils';
+import { adsPeriodDateRange, type PeriodId } from '@/app/dashboard/lead-utils';
 
 /**
  * Leitura da Meta Marketing API para o painel /dash-ads. Server-side apenas
@@ -40,22 +40,12 @@ function config() {
   return { token: token as string, account };
 }
 
-/** PeriodId do app -> date_preset da Meta. */
-function datePreset(period: PeriodId): string {
-  switch (period) {
-    case 'today':
-      return 'today';
-    case 'yesterday':
-      return 'yesterday';
-    case '7d':
-      return 'last_7d';
-    case '14d':
-      return 'last_14d';
-    case '30d':
-      return 'last_30d';
-    case 'all':
-      return 'maximum';
-  }
+/** time_range da Meta (JSON) para o periodo. Usa a mesma janela do Google
+ *  (N dias terminando ontem), para os dois paineis baterem entre si e com as
+ *  interfaces nativas. */
+function metaTimeRange(period: PeriodId): string {
+  const { since, until } = adsPeriodDateRange(period);
+  return JSON.stringify({ since, until });
 }
 
 async function graph(path: string, params: Record<string, string>, token: string): Promise<unknown> {
@@ -107,25 +97,14 @@ async function fetchFollowers(
   return {};
 }
 
-/** Janela (em segundos Unix) de cada periodo para o crescimento de seguidores. */
+/** Janela (segundos Unix) para o crescimento de seguidores — mesma do resto do
+ *  painel (fuso Sao Paulo, terminando ontem). follower_count so cobre 30 dias. */
 function growthWindow(period: PeriodId): { since: number; until: number } {
-  const day = 86400;
-  const now = Math.floor(Date.now() / 1000);
-  switch (period) {
-    case 'today':
-      return { since: now - day, until: now };
-    case 'yesterday':
-      return { since: now - 2 * day, until: now - day };
-    case '7d':
-      return { since: now - 7 * day, until: now };
-    case '14d':
-      return { since: now - 14 * day, until: now };
-    case '30d':
-      return { since: now - 30 * day, until: now };
-    case 'all':
-      // follower_count so retorna ate 30 dias — limite da API.
-      return { since: now - 30 * day, until: now };
-  }
+  const { since, until } = adsPeriodDateRange(period);
+  // Sao Paulo e UTC-3 (sem horario de verao desde 2019).
+  const ts = (d: string, endOfDay = false) =>
+    Math.floor(new Date(`${d}T${endOfDay ? '23:59:59' : '00:00:00'}-03:00`).getTime() / 1000);
+  return { since: ts(since), until: ts(until, true) };
 }
 
 /** Seguidores ganhos (liquido) no periodo, via IG insights follower_count.
@@ -158,12 +137,12 @@ export async function fetchMetaAds(period: PeriodId): Promise<AdsResponse> {
   if (cached && Date.now() - cached.at < CACHE_TTL_MS) return cached.value;
 
   const { token, account } = config();
-  const preset = datePreset(period);
+  const timeRange = metaTimeRange(period);
 
   // 1) Totais da conta. 2) Serie diaria de investimento. 3) Campanhas ativas.
   const [totalsData, dailyData, activeCampaigns, follow] = await Promise.all([
-    graph(`${account}/insights`, { fields: 'spend,impressions,clicks,actions', date_preset: preset, level: 'account' }, token) as Promise<{ data?: InsightRow[] }>,
-    graph(`${account}/insights`, { fields: 'spend', date_preset: preset, level: 'account', time_increment: '1' }, token) as Promise<{ data?: InsightRow[] }>,
+    graph(`${account}/insights`, { fields: 'spend,impressions,clicks,actions', time_range: timeRange, level: 'account' }, token) as Promise<{ data?: InsightRow[] }>,
+    graph(`${account}/insights`, { fields: 'spend', time_range: timeRange, level: 'account', time_increment: '1' }, token) as Promise<{ data?: InsightRow[] }>,
     graph(`${account}/campaigns`, { fields: 'id,name', filtering: '[{"field":"effective_status","operator":"IN","value":["ACTIVE"]}]', limit: '100' }, token) as Promise<{ data?: { id: string; name: string }[] }>,
     fetchFollowers(token),
   ]);
@@ -186,7 +165,7 @@ export async function fetchMetaAds(period: PeriodId): Promise<AdsResponse> {
   if (activeIds.size > 0) {
     const campData = (await graph(
       `${account}/insights`,
-      { fields: 'campaign_id,campaign_name,spend,clicks,actions', date_preset: preset, level: 'campaign', limit: '200' },
+      { fields: 'campaign_id,campaign_name,spend,clicks,actions', time_range: timeRange, level: 'campaign', limit: '200' },
       token,
     )) as { data?: InsightRow[] };
     campaigns = (campData.data ?? [])
