@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import {
   BadgeInfo,
+  Bot,
   Chrome,
   CircleAlert,
   CircleDollarSign,
@@ -24,7 +25,7 @@ import { cn } from '@/lib/utils';
 import { PERIODS, type PeriodId } from '../dashboard/lead-utils';
 import { useScrollFade } from '../dashboard/use-scroll-fade';
 import { useSessionKeepAlive } from '../dashboard/use-session-keepalive';
-import { PLATFORMS, type PlatformId } from './config';
+import { TABS, type PlatformAccent, type TabConfig, type TabId } from './config';
 import {
   adsPeriodRangeLabel,
   formatBRL,
@@ -39,9 +40,134 @@ export default function AdsDashboard() {
   const router = useRouter();
   // Desliza a sessao em atividade real; sem interacao por 30 min = deslogado.
   useSessionKeepAlive();
-  // Plataforma escolhida dentro da propria pagina (Meta abre por padrao).
-  const [platform, setPlatform] = useState<PlatformId>('meta');
-  const config = PLATFORMS[platform];
+  // Aba escolhida dentro da propria pagina (Meta abre por padrao).
+  const [tab, setTab] = useState<TabId>('meta');
+  const config = TABS[tab];
+  // "Atualizar" mora no header (ao lado de Sair); o nonce sinaliza o corpo a
+  // recarregar, e o corpo devolve o estado de carregamento para o icone girar.
+  const [reloadNonce, setReloadNonce] = useState(0);
+  const [bodyLoading, setBodyLoading] = useState(true);
+  const handleLoadingChange = useCallback((loading: boolean) => setBodyLoading(loading), []);
+
+  async function handleLogout() {
+    await fetch('/api/dashboard-auth', { method: 'DELETE' });
+    router.replace('/dash-ads/login');
+  }
+
+  return (
+    <div className="relative min-h-screen text-white">
+      <div aria-hidden className="fixed inset-0 -z-10">
+        <div className="absolute inset-0 bg-[url('/texture-bg.webp')] bg-cover bg-center" />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#16101a]/85 via-[#121016]/70 to-[#0a0910]/85" />
+      </div>
+
+      <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+        <header className="mb-6">
+          <div className="mb-5 flex flex-wrap items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <Image
+                src={imgLogo}
+                alt="Correa & Laia Advocacia"
+                priority
+                className="w-[104px] sm:w-[124px]"
+                style={{ height: 'auto' }}
+              />
+              <div className="border-l border-white/15 pl-4">
+                <p className="text-[11px] font-medium tracking-[0.2em] text-secondary uppercase">
+                  Trafego pago
+                </p>
+                <h1 className="mt-0.5 flex items-center gap-2 font-display text-2xl text-accent sm:text-3xl">
+                  {config.label}
+                  <span
+                    className={cn(
+                      'rounded-full border px-2 py-0.5 text-[10px] font-semibold tracking-wide uppercase',
+                      config.accent.badge,
+                    )}
+                  >
+                    {config.short}
+                  </span>
+                </h1>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setReloadNonce((n) => n + 1)}
+                className="glass-soft flex items-center gap-2 px-3 py-2 text-sm text-white/70 transition hover:text-white"
+              >
+                <RefreshCw className={cn('size-4', bodyLoading && 'animate-spin')} aria-hidden />
+                <span className="hidden sm:inline">Atualizar</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => void handleLogout()}
+                aria-label="Sair"
+                className="glass-soft flex items-center gap-2 p-2 px-3 text-sm text-white/60 transition hover:text-white"
+              >
+                <LogOut className="size-4" aria-hidden />
+                <span className="hidden sm:inline">Sair</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Seletor de aba: as duas plataformas de ads + a campanha do Typebot. */}
+          <div
+            role="tablist"
+            aria-label="Painel"
+            className="glass-panel flex gap-1 rounded-xl p-1"
+          >
+            {(
+              [
+                { id: 'meta', label: 'Meta', icon: Facebook },
+                { id: 'google', label: 'Google', icon: Chrome },
+                { id: 'typebot', label: 'Typebot', icon: Bot },
+              ] as const
+            ).map(({ id, label, icon: Icon }) => (
+              <button
+                key={id}
+                role="tab"
+                aria-selected={tab === id}
+                onClick={() => setTab(id)}
+                className={cn(
+                  'flex flex-1 items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition sm:flex-none',
+                  tab === id ? 'bg-accent text-[#0f1020]' : 'text-white/55 hover:text-white',
+                )}
+              >
+                <Icon className="size-4" aria-hidden />
+                {label}
+              </button>
+            ))}
+          </div>
+        </header>
+
+        <AdsPlatformBody
+          key={tab}
+          tab={config}
+          reloadNonce={reloadNonce}
+          onLoadingChange={handleLoadingChange}
+        />
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Corpo de uma aba: filtro de periodo, KPIs, grafico de investimento e a(s)
+ * campanha(s). O filtro segue a convencao das interfaces nativas (N dias
+ * terminando ONTEM). Remonta ao trocar de aba (key={tab}).
+ */
+function AdsPlatformBody({
+  tab,
+  reloadNonce,
+  onLoadingChange,
+}: {
+  tab: TabConfig;
+  reloadNonce: number;
+  onLoadingChange: (loading: boolean) => void;
+}) {
+  const router = useRouter();
+  const config = tab;
   const [period, setPeriod] = useState<PeriodId>('7d');
   const [now] = useState(() => Date.now());
   const [data, setData] = useState<AdsResponse | null>(null);
@@ -52,7 +178,10 @@ export default function AdsDashboard() {
   const load = useCallback(async () => {
     setIsLoading(true);
     try {
-      const response = await fetch(`/api/ads/${platform}?period=${period}`, {
+      const qs = new URLSearchParams({ period });
+      if (tab.campaign) qs.set('campaign', tab.campaign);
+      if (tab.resultsFromTypebot) qs.set('results', 'typebot');
+      const response = await fetch(`/api/ads/${tab.apiPlatform}?${qs.toString()}`, {
         cache: 'no-store',
       });
       if (response.status === 401) {
@@ -71,16 +200,16 @@ export default function AdsDashboard() {
     } finally {
       setIsLoading(false);
     }
-  }, [platform, period, router]);
+  }, [tab, period, router]);
 
   useEffect(() => {
     void load();
-  }, [load]);
+  }, [load, reloadNonce]);
 
-  async function handleLogout() {
-    await fetch('/api/dashboard-auth', { method: 'DELETE' });
-    router.replace('/dash-ads/login');
-  }
+  // Reporta o carregamento ao header (icone de Atualizar gira enquanto busca).
+  useEffect(() => {
+    onLoadingChange(isLoading);
+  }, [isLoading, onLoadingChange]);
 
   const totals = data?.totals;
   const ctr =
@@ -162,200 +291,112 @@ export default function AdsDashboard() {
   }
 
   return (
-    <div className="relative min-h-screen text-white">
-      <div aria-hidden className="fixed inset-0 -z-10">
-        <div className="absolute inset-0 bg-[url('/texture-bg.webp')] bg-cover bg-center" />
-        <div className="absolute inset-0 bg-gradient-to-b from-[#16101a]/85 via-[#121016]/70 to-[#0a0910]/85" />
-      </div>
-
-      <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-        <header className="mb-6">
-          <div className="mb-5 flex flex-wrap items-center justify-between gap-4">
-            <div className="flex items-center gap-4">
-              <Image
-                src={imgLogo}
-                alt="Correa & Laia Advocacia"
-                priority
-                className="w-[104px] sm:w-[124px]"
-                style={{ height: 'auto' }}
-              />
-              <div className="border-l border-white/15 pl-4">
-                <p className="text-[11px] font-medium tracking-[0.2em] text-secondary uppercase">
-                  Trafego pago
-                </p>
-                <h1 className="mt-0.5 flex items-center gap-2 font-display text-2xl text-accent sm:text-3xl">
-                  {config.label}
-                  <span
-                    className={cn(
-                      'rounded-full border px-2 py-0.5 text-[10px] font-semibold tracking-wide uppercase',
-                      config.accent.badge,
-                    )}
-                  >
-                    {config.short}
-                  </span>
-                </h1>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => void load()}
-                className={cn(
-                  'glass-soft flex items-center gap-2 px-3 py-2 text-sm text-white/70 transition hover:text-white',
-                )}
-              >
-                <RefreshCw
-                  className={cn('size-4', isLoading && 'animate-spin')}
-                  aria-hidden
-                />
-                <span className="hidden sm:inline">Atualizar</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => void handleLogout()}
-                aria-label="Sair"
-                className="glass-soft flex items-center gap-2 p-2 px-3 text-sm text-white/60 transition hover:text-white"
-              >
-                <LogOut className="size-4" aria-hidden />
-                <span className="hidden sm:inline">Sair</span>
-              </button>
-            </div>
-          </div>
-
-          {/* Seletor de plataforma dentro da propria pagina. */}
+    <>
+      <div className="mb-5">
+        <div className="glass-panel rounded-xl p-1">
           <div
+            ref={periodScroller}
             role="tablist"
-            aria-label="Plataforma"
-            className="glass-panel mb-3 flex gap-1 rounded-xl p-1"
+            aria-label="Filtro de periodo"
+            className="scroll-fade-x no-scrollbar flex gap-1 overflow-x-auto"
           >
-            {(
-              [
-                { id: 'meta', label: 'Meta', icon: Facebook },
-                { id: 'google', label: 'Google', icon: Chrome },
-              ] as const
-            ).map(({ id, label, icon: Icon }) => (
+            {PERIODS.map((item) => (
               <button
-                key={id}
+                key={item.id}
                 role="tab"
-                aria-selected={platform === id}
-                onClick={() => setPlatform(id)}
+                aria-selected={period === item.id}
+                onClick={() => setPeriod(item.id)}
                 className={cn(
-                  'flex flex-1 items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition sm:flex-none',
-                  platform === id ? 'bg-accent text-[#0f1020]' : 'text-white/55 hover:text-white',
+                  'shrink-0 rounded-lg px-4 py-2 text-center transition',
+                  period === item.id
+                    ? 'bg-accent text-[#0f1020]'
+                    : 'text-white/55 hover:text-white',
                 )}
               >
-                <Icon className="size-4" aria-hidden />
-                {label}
+                <span className="block text-xs font-semibold tracking-wide uppercase">
+                  {item.label}
+                </span>
+                <span className="block text-[10px] opacity-70">
+                  {adsPeriodRangeLabel(item.id, now)}
+                </span>
               </button>
             ))}
           </div>
-
-          <div className="glass-panel rounded-xl p-1">
-            <div
-              ref={periodScroller}
-              role="tablist"
-              aria-label="Filtro de periodo"
-              className="scroll-fade-x no-scrollbar flex gap-1 overflow-x-auto"
-            >
-              {PERIODS.map((item) => (
-                <button
-                  key={item.id}
-                  role="tab"
-                  aria-selected={period === item.id}
-                  onClick={() => setPeriod(item.id)}
-                  className={cn(
-                    'shrink-0 rounded-lg px-4 py-2 text-center transition',
-                    period === item.id
-                      ? 'bg-accent text-[#0f1020]'
-                      : 'text-white/55 hover:text-white',
-                  )}
-                >
-                  <span className="block text-xs font-semibold tracking-wide uppercase">
-                    {item.label}
-                  </span>
-                  <span className="block text-[10px] opacity-70">
-                    {adsPeriodRangeLabel(item.id, now)}
-                  </span>
-                </button>
-              ))}
-            </div>
-          </div>
-        </header>
-
-        {error && (
-          <div
-            role="alert"
-            className="mb-5 flex items-center gap-3 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200"
-          >
-            <CircleAlert className="size-4 shrink-0" aria-hidden />
-            {error}
-          </div>
-        )}
-
-        {data?.sample && (
-          <div className="mb-5 flex items-center gap-3 rounded-xl border border-amber-400/30 bg-amber-400/10 px-4 py-3 text-sm text-amber-100">
-            <BadgeInfo className="size-4 shrink-0" aria-hidden />
-            Dados de exemplo — a integracao com a API do {config.label} sera
-            ligada no proximo passo.
-          </div>
-        )}
-
-        <section className="mb-5 grid grid-cols-2 gap-4 lg:grid-cols-4">
-          {kpis.map((kpi) => (
-            <StatCard
-              key={kpi.label}
-              label={kpi.label}
-              value={kpi.value}
-              caption={kpi.caption}
-              icon={kpi.icon}
-              accent={kpi.accent}
-              loading={isLoading}
-            />
-          ))}
-        </section>
-
-        <section className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-          <Panel
-            title="Investimento / dia"
-            subtitle={periodLabel}
-            accent={config.accent}
-            icon={<CircleDollarSign className="size-4" aria-hidden />}
-          >
-            <SpendChart
-              series={data?.series ?? []}
-              accent={config.accent}
-              loading={isLoading}
-            />
-          </Panel>
-
-          <Panel
-            title="Campanhas ativas"
-            subtitle={`${data?.campaigns.length ?? 0} em veiculacao - ${periodLabel}`}
-            accent={config.accent}
-            icon={<Target className="size-4" aria-hidden />}
-          >
-            <CampaignList
-              campaigns={data?.campaigns ?? []}
-              resultLabel={config.resultLabel}
-              loading={isLoading}
-            />
-          </Panel>
-        </section>
-
-        <footer className="mt-6 flex flex-col gap-2 text-xs tracking-wide text-white/35 uppercase sm:flex-row sm:items-center sm:justify-between">
-          <span>
-            Investimento no periodo: {totals ? formatBRL(totals.spend) : '--'}
-          </span>
-          {data?.followersHandle && <span>@{data.followersHandle}</span>}
-          <span>{config.label} · painel do cliente</span>
-        </footer>
+        </div>
       </div>
-    </div>
+
+      {error && (
+        <div
+          role="alert"
+          className="mb-5 flex items-center gap-3 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200"
+        >
+          <CircleAlert className="size-4 shrink-0" aria-hidden />
+          {error}
+        </div>
+      )}
+
+      {data?.sample && (
+        <div className="mb-5 flex items-center gap-3 rounded-xl border border-amber-400/30 bg-amber-400/10 px-4 py-3 text-sm text-amber-100">
+          <BadgeInfo className="size-4 shrink-0" aria-hidden />
+          Dados de exemplo — a integracao com a API do {config.label} sera
+          ligada no proximo passo.
+        </div>
+      )}
+
+      <section className="mb-5 grid grid-cols-2 gap-4 lg:grid-cols-4">
+        {kpis.map((kpi) => (
+          <StatCard
+            key={kpi.label}
+            label={kpi.label}
+            value={kpi.value}
+            caption={kpi.caption}
+            icon={kpi.icon}
+            accent={kpi.accent}
+            loading={isLoading}
+          />
+        ))}
+      </section>
+
+      <section className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <Panel
+          title="Investimento / dia"
+          subtitle={periodLabel}
+          accent={config.accent}
+          icon={<CircleDollarSign className="size-4" aria-hidden />}
+        >
+          <SpendChart
+            series={data?.series ?? []}
+            accent={config.accent}
+            loading={isLoading}
+          />
+        </Panel>
+
+        <Panel
+          title="Campanhas ativas"
+          subtitle={`${data?.campaigns.length ?? 0} em veiculacao - ${periodLabel}`}
+          accent={config.accent}
+          icon={<Target className="size-4" aria-hidden />}
+        >
+          <CampaignList
+            campaigns={data?.campaigns ?? []}
+            resultLabel={config.resultLabel}
+            loading={isLoading}
+          />
+        </Panel>
+      </section>
+
+      <footer className="mt-6 flex flex-col gap-2 text-xs tracking-wide text-white/35 uppercase sm:flex-row sm:items-center sm:justify-between">
+        <span>
+          Investimento no periodo: {totals ? formatBRL(totals.spend) : '--'}
+        </span>
+        {data?.followersHandle && <span>@{data.followersHandle}</span>}
+        <span>{config.label} · painel do cliente</span>
+      </footer>
+    </>
   );
 }
 
-type Accent = (typeof PLATFORMS)[PlatformId]['accent'];
+type Accent = PlatformAccent;
 
 /** Cor de um card: chip do icone, brilho, fio no topo e barra lateral. */
 type CardAccent = { chip: string; glow: string; rule: string; edge: string };

@@ -1,11 +1,24 @@
 import { NextResponse } from 'next/server';
 import { fetchMetaAds, MetaConfigError } from '@/lib/meta-ads';
 import { fetchGoogleAds, GoogleConfigError } from '@/lib/google-ads';
-import type { PeriodId } from '@/app/dashboard/lead-utils';
+import { fetchLeads } from '@/lib/typebot';
+import { adsPeriodDateRange, dayKey, type PeriodId } from '@/app/dashboard/lead-utils';
 
 export const dynamic = 'force-dynamic';
 
 const PERIODS: PeriodId[] = ['today', 'yesterday', '7d', '14d', '30d', 'all'];
+
+/** Quantos leads chegaram no Typebot dentro da janela do periodo (mesma janela
+ *  das datas do painel de ads). Para "todo o periodo", conta todos. */
+async function countLeadsInPeriod(period: PeriodId): Promise<number> {
+  const leads = await fetchLeads();
+  if (period === 'all') return leads.length;
+  const { since, until } = adsPeriodDateRange(period);
+  return leads.filter((l) => {
+    const k = dayKey(new Date(l.createdAt));
+    return k >= since && k <= until;
+  }).length;
+}
 
 export async function GET(
   request: Request,
@@ -15,10 +28,26 @@ export async function GET(
   const url = new URL(request.url);
   const periodParam = url.searchParams.get('period') as PeriodId | null;
   const period: PeriodId = periodParam && PERIODS.includes(periodParam) ? periodParam : '7d';
+  // Escopo opcional numa campanha (nome exato) e origem dos "Resultados".
+  const campaign = url.searchParams.get('campaign') || undefined;
+  const resultsFromTypebot = url.searchParams.get('results') === 'typebot';
 
   try {
     if (platform === 'meta') {
-      const data = await fetchMetaAds(period);
+      const data = await fetchMetaAds(period, { campaign, followers: !resultsFromTypebot });
+
+      // Aba Typebot: "Resultados" = leads reais que chegaram no Typebot (nao a
+      // conversao da campanha). Se o Typebot falhar, mantem o dado do Meta.
+      if (resultsFromTypebot) {
+        try {
+          const leadCount = await countLeadsInPeriod(period);
+          data.totals.results = leadCount;
+          data.campaigns = data.campaigns.map((c) => ({ ...c, results: leadCount }));
+        } catch (leadError) {
+          console.error('[api/ads] leads para Resultados', leadError);
+        }
+      }
+
       return NextResponse.json(data, { headers: { 'Cache-Control': 'no-store' } });
     }
     if (platform === 'google') {

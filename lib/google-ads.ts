@@ -7,7 +7,9 @@ import type { AdsResponse } from '@/lib/meta-ads';
  */
 
 const OAUTH = 'https://oauth2.googleapis.com/token';
-const API = 'https://googleads.googleapis.com/v21';
+// v21 e anteriores foram desativadas pela Google (respondem 404 HTML). As
+// versoes vivas em 2026-08 sao v22..v25; fixamos a mais nova testada (v25).
+const API = 'https://googleads.googleapis.com/v25';
 const CACHE_TTL_MS = 3 * 60 * 1000;
 
 export class GoogleConfigError extends Error {
