@@ -62,11 +62,13 @@ export const PLATFORMS: Record<PlatformId, PlatformConfig> = {
 };
 
 /**
- * Nomes EXATOS (como vem da API do Meta) das campanhas fixadas em cada aba de
- * ads. Se a cliente trocar de campanha, e aqui que se atualiza.
+ * IDs das campanhas fixadas em cada aba de ads (o ID e estavel — imune a renome
+ * e acento, ao contrario do nome). Se a cliente trocar de campanha, e o ID aqui
+ * que se atualiza. O nome ao lado e so referencia humana.
  */
 export const META_CAMPAIGNS = {
-  fgts: '[28/07/26] [Escritório] [Tráfego] FGTS',
+  // [27/08/26] [Escritório] [Tráfego] CAT (Comunicação de Acidente de Trabalho)
+  cat: '120251649227200213',
 } as const;
 
 /**
@@ -76,13 +78,13 @@ export const META_CAMPAIGNS = {
 export type TabId = PlatformId | 'typebot';
 
 export type TabConfig = PlatformConfig & {
-  /** Escopar o painel numa unica campanha (nome exato). */
-  campaign?: string;
+  /** Escopar o painel numa unica campanha, pelo ID do Meta. */
+  campaignId?: string;
 };
 
 export const TABS: Record<PlatformId, TabConfig> = {
-  // Meta: so a campanha de trafego FGTS (Resultados = cliques no link; mantem seguidores).
-  meta: { ...PLATFORMS.meta, campaign: META_CAMPAIGNS.fgts },
+  // Meta: so a campanha CAT de trafego (Resultados = cliques no link; mantem seguidores).
+  meta: { ...PLATFORMS.meta, campaignId: META_CAMPAIGNS.cat },
   // Google: conta inteira (todas as campanhas ativas), como antes.
   google: { ...PLATFORMS.google },
 };

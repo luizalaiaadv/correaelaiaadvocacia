@@ -18,6 +18,7 @@ import {
   Target,
   TrendingUp,
   Users,
+  type LucideIcon,
 } from 'lucide-react';
 import imgLogo from '@/public/logofooter.webp';
 import type { AdsResponse } from '@/lib/meta-ads';
@@ -36,6 +37,20 @@ import {
   formatPercent,
   formatShortDate,
 } from './ads-utils';
+
+/**
+ * Flag da aba Typebot (lista de leads do Typebot). OCULTA por padrao — o painel
+ * volta a ser so Meta/Google. Quando for rodar campanha com Typebot de novo,
+ * troque para `true`: o componente <LeadsPanel/> e a pagina /dashboard continuam
+ * prontos, entao basta isto para a aba reaparecer. Ver CHANGELOG.md ("Aba Typebot").
+ */
+const SHOW_TYPEBOT_TAB = false;
+
+const TAB_ITEMS: { id: TabId; label: string; icon: LucideIcon }[] = [
+  { id: 'meta', label: 'Meta', icon: Facebook },
+  { id: 'google', label: 'Google', icon: Chrome },
+  ...(SHOW_TYPEBOT_TAB ? [{ id: 'typebot' as const, label: 'Typebot', icon: Bot }] : []),
+];
 
 export default function AdsDashboard() {
   const router = useRouter();
@@ -120,19 +135,13 @@ export default function AdsDashboard() {
             </div>
           </div>
 
-          {/* Seletor de aba: as duas plataformas de ads + a lista de leads do Typebot. */}
+          {/* Seletor de aba (Meta/Google; a aba Typebot entra via SHOW_TYPEBOT_TAB). */}
           <div
             role="tablist"
             aria-label="Painel"
             className="glass-panel flex gap-1 rounded-xl p-1"
           >
-            {(
-              [
-                { id: 'meta', label: 'Meta', icon: Facebook },
-                { id: 'google', label: 'Google', icon: Chrome },
-                { id: 'typebot', label: 'Typebot', icon: Bot },
-              ] as const
-            ).map(({ id, label, icon: Icon }) => (
+            {TAB_ITEMS.map(({ id, label, icon: Icon }) => (
               <button
                 key={id}
                 role="tab"
@@ -192,7 +201,7 @@ function AdsPlatformBody({
     setIsLoading(true);
     try {
       const qs = new URLSearchParams({ period });
-      if (tab.campaign) qs.set('campaign', tab.campaign);
+      if (tab.campaignId) qs.set('campaignId', tab.campaignId);
       const response = await fetch(`/api/ads/${tab.id}?${qs.toString()}`, {
         cache: 'no-store',
       });

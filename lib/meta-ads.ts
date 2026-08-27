@@ -147,53 +147,28 @@ async function fetchFollowerGrowth(
   }
 }
 
-/** Resolve o id de uma campanha pelo nome exato (ou undefined se nao existir). */
-async function resolveCampaignId(account: string, token: string, name: string): Promise<string | undefined> {
-  const data = (await graph(
-    `${account}/campaigns`,
-    { fields: 'id,name', limit: '500' },
-    token,
-  )) as { data?: { id: string; name: string }[] };
-  return data.data?.find((c) => c.name === name)?.id;
-}
-
 /**
- * Painel de UMA campanha (por nome). Os totais e a serie diaria vem do proprio
- * no da campanha (`{campaignId}/insights`), entao ja chegam escopados — nada de
- * somar a conta inteira. Segue a mesma janela de datas do resto do painel.
+ * Painel de UMA campanha (por ID). Os totais e a serie diaria vem do proprio no
+ * da campanha (`{campaignId}/insights`), entao ja chegam escopados — nada de
+ * somar a conta inteira. Escopar por ID (nao por nome) e imune a acento,
+ * parenteses e renome da campanha. Sem dados no periodo -> zeros (nao e erro:
+ * campanha nova/pausada). O nome exibido vem do proprio insight.
  */
 async function fetchCampaignScoped(
-  account: string,
-  token: string,
+  campaignId: string,
   period: PeriodId,
   timeRange: string,
-  campaign: string,
   wantFollowers: boolean,
+  token: string,
 ): Promise<AdsResponse> {
-  const campaignId = await resolveCampaignId(account, token, campaign);
+  const [totalsData, dailyData, follow] = (await Promise.all([
+    graph(`${campaignId}/insights`, { fields: 'campaign_name,spend,impressions,clicks,actions', time_range: timeRange }, token),
+    graph(`${campaignId}/insights`, { fields: 'spend', time_range: timeRange, time_increment: '1' }, token),
+    wantFollowers ? fetchFollowers(token) : Promise.resolve({} as Awaited<ReturnType<typeof fetchFollowers>>),
+  ])) as [{ data?: InsightRow[] }, { data?: InsightRow[] }, Awaited<ReturnType<typeof fetchFollowers>>];
 
-  const follow = wantFollowers ? await fetchFollowers(token) : {};
   const followersGained =
     wantFollowers && follow.igId ? await fetchFollowerGrowth(follow.igId, period, token) : undefined;
-
-  // Campanha nao encontrada: devolve zeros (o painel ainda carrega, sem inventar).
-  if (!campaignId) {
-    return {
-      sample: false,
-      totals: { spend: 0, impressions: 0, clicks: 0, results: 0 },
-      series: [],
-      campaigns: [],
-      followers: wantFollowers ? follow.followers : undefined,
-      followersGained,
-      followersHandle: wantFollowers ? follow.handle : undefined,
-      fetchedAt: new Date().toISOString(),
-    };
-  }
-
-  const [totalsData, dailyData] = (await Promise.all([
-    graph(`${campaignId}/insights`, { fields: 'spend,impressions,clicks,actions', time_range: timeRange }, token),
-    graph(`${campaignId}/insights`, { fields: 'spend', time_range: timeRange, time_increment: '1' }, token),
-  ])) as [{ data?: InsightRow[] }, { data?: InsightRow[] }];
 
   const totalRow = totalsData.data?.[0];
   const totals = {
@@ -208,7 +183,7 @@ async function fetchCampaignScoped(
     .map((r) => ({ key: r.date_start as string, spend: num(r.spend) }));
 
   const campaigns: AdsResponse['campaigns'] = totalRow
-    ? [{ name: campaign, spend: totals.spend, clicks: totals.clicks, results: totals.results }]
+    ? [{ name: totalRow.campaign_name ?? 'Campanha', spend: totals.spend, clicks: totals.clicks, results: totals.results }]
     : [];
 
   return {
@@ -223,23 +198,23 @@ async function fetchCampaignScoped(
   };
 }
 
-/** Opcoes do painel Meta: escopar numa campanha e/ou incluir seguidores. */
-export type MetaOptions = { campaign?: string; followers?: boolean };
+/** Opcoes do painel Meta: escopar numa campanha (por ID) e/ou incluir seguidores. */
+export type MetaOptions = { campaignId?: string; followers?: boolean };
 
 // Cache simples em memoria (por instancia), chaveado por periodo + opcoes.
 const cache = new Map<string, { at: number; value: AdsResponse }>();
 
 export async function fetchMetaAds(period: PeriodId, options: MetaOptions = {}): Promise<AdsResponse> {
-  const { campaign, followers: wantFollowers = true } = options;
-  const cacheKey = `${period}|${campaign ?? ''}|${wantFollowers}`;
+  const { campaignId, followers: wantFollowers = true } = options;
+  const cacheKey = `${period}|${campaignId ?? ''}|${wantFollowers}`;
   const cached = cache.get(cacheKey);
   if (cached && Date.now() - cached.at < CACHE_TTL_MS) return cached.value;
 
   const { token, account } = config();
   const timeRange = metaTimeRange(period);
 
-  if (campaign) {
-    const scoped = await fetchCampaignScoped(account, token, period, timeRange, campaign, wantFollowers);
+  if (campaignId) {
+    const scoped = await fetchCampaignScoped(campaignId, period, timeRange, wantFollowers, token);
     cache.set(cacheKey, { at: Date.now(), value: scoped });
     return scoped;
   }

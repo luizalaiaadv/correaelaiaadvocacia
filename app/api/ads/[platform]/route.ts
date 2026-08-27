@@ -15,12 +15,12 @@ export async function GET(
   const url = new URL(request.url);
   const periodParam = url.searchParams.get('period') as PeriodId | null;
   const period: PeriodId = periodParam && PERIODS.includes(periodParam) ? periodParam : '7d';
-  // Escopo opcional numa campanha (nome exato).
-  const campaign = url.searchParams.get('campaign') || undefined;
+  // Escopo opcional numa campanha, pelo ID do Meta.
+  const campaignId = url.searchParams.get('campaignId') || undefined;
 
   try {
     if (platform === 'meta') {
-      const data = await fetchMetaAds(period, { campaign });
+      const data = await fetchMetaAds(period, { campaignId });
       return NextResponse.json(data, { headers: { 'Cache-Control': 'no-store' } });
     }
     if (platform === 'google') {
