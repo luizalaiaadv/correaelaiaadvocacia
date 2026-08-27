@@ -62,58 +62,27 @@ export const PLATFORMS: Record<PlatformId, PlatformConfig> = {
 };
 
 /**
- * Nomes EXATOS (como vem da API do Meta) das campanhas fixadas em cada aba. Se a
- * cliente trocar de campanha, e aqui que se atualiza.
+ * Nomes EXATOS (como vem da API do Meta) das campanhas fixadas em cada aba de
+ * ads. Se a cliente trocar de campanha, e aqui que se atualiza.
  */
 export const META_CAMPAIGNS = {
   fgts: '[28/07/26] [Escritório] [Tráfego] FGTS',
-  acidente: '[13/08/26] [Escritório] [Vendas] Acidente de Trabalho',
 } as const;
 
-/** Cor da aba Typebot: cobre da marca (mesma familia do painel de leads). */
-const TYPEBOT_ACCENT: PlatformAccent = {
-  badge: 'border-secondary/40 bg-secondary/25 text-[#e8b39a]',
-  chip: 'bg-secondary/30 text-[#e8b39a]',
-  edge: 'bg-secondary',
-  glow: 'bg-secondary/45',
-  rule: 'via-secondary/80',
-  bar: 'bg-secondary',
-  barHover: 'group-hover:bg-accent',
-};
-
-/** Aba do painel: as duas plataformas + o Typebot (que le a campanha no Meta). */
+/**
+ * Abas de ADS (Meta e Google). A aba Typebot NAO entra aqui: ela mostra a lista
+ * de leads (`<LeadsPanel/>`), nao um painel de campanha.
+ */
 export type TabId = PlatformId | 'typebot';
 
-export type TabConfig = {
-  id: TabId;
-  /** Qual /api/ads/[platform] consultar (o Typebot le dados do Meta). */
-  apiPlatform: PlatformId;
-  label: string;
-  short: string;
-  resultLabel: string;
-  resultSingular: string;
+export type TabConfig = PlatformConfig & {
   /** Escopar o painel numa unica campanha (nome exato). */
   campaign?: string;
-  /** "Resultados" vem da contagem de leads do Typebot, nao da campanha. */
-  resultsFromTypebot?: boolean;
-  accent: PlatformAccent;
 };
 
-export const TABS: Record<TabId, TabConfig> = {
+export const TABS: Record<PlatformId, TabConfig> = {
   // Meta: so a campanha de trafego FGTS (Resultados = cliques no link; mantem seguidores).
-  meta: { ...PLATFORMS.meta, apiPlatform: 'meta', campaign: META_CAMPAIGNS.fgts },
+  meta: { ...PLATFORMS.meta, campaign: META_CAMPAIGNS.fgts },
   // Google: conta inteira (todas as campanhas ativas), como antes.
-  google: { ...PLATFORMS.google, apiPlatform: 'google' },
-  // Typebot: dados da campanha Acidente (Meta), mas Resultados = leads do Typebot.
-  typebot: {
-    id: 'typebot',
-    apiPlatform: 'meta',
-    label: 'Typebot',
-    short: 'Typebot',
-    resultLabel: 'Resultados',
-    resultSingular: 'resultado',
-    campaign: META_CAMPAIGNS.acidente,
-    resultsFromTypebot: true,
-    accent: TYPEBOT_ACCENT,
-  },
+  google: { ...PLATFORMS.google },
 };

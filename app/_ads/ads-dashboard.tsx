@@ -25,6 +25,7 @@ import { cn } from '@/lib/utils';
 import { PERIODS, type PeriodId } from '../dashboard/lead-utils';
 import { useScrollFade } from '../dashboard/use-scroll-fade';
 import { useSessionKeepAlive } from '../dashboard/use-session-keepalive';
+import LeadsPanel from '../dashboard/leads-panel';
 import { TABS, type PlatformAccent, type TabConfig, type TabId } from './config';
 import {
   adsPeriodRangeLabel,
@@ -42,9 +43,12 @@ export default function AdsDashboard() {
   useSessionKeepAlive();
   // Aba escolhida dentro da propria pagina (Meta abre por padrao).
   const [tab, setTab] = useState<TabId>('meta');
-  const config = TABS[tab];
-  // "Atualizar" mora no header (ao lado de Sair); o nonce sinaliza o corpo a
-  // recarregar, e o corpo devolve o estado de carregamento para o icone girar.
+  const isTypebot = tab === 'typebot';
+  // Typebot e a lista de leads (LeadsPanel); Meta/Google sao painel de ads (TABS).
+  const config = isTypebot ? null : TABS[tab];
+  // Para as abas de ads, "Atualizar" mora no header (ao lado de Sair); o nonce
+  // sinaliza o corpo a recarregar e o corpo devolve o carregamento para o icone
+  // girar. A aba Typebot tem os proprios controles dentro do LeadsPanel.
   const [reloadNonce, setReloadNonce] = useState(0);
   const [bodyLoading, setBodyLoading] = useState(true);
   const handleLoadingChange = useCallback((loading: boolean) => setBodyLoading(loading), []);
@@ -74,31 +78,36 @@ export default function AdsDashboard() {
               />
               <div className="border-l border-white/15 pl-4">
                 <p className="text-[11px] font-medium tracking-[0.2em] text-secondary uppercase">
-                  Trafego pago
+                  {isTypebot ? 'Dashboard em tempo real' : 'Trafego pago'}
                 </p>
                 <h1 className="mt-0.5 flex items-center gap-2 font-display text-2xl text-accent sm:text-3xl">
-                  {config.label}
+                  {isTypebot ? 'Leads do Typebot' : config!.label}
                   <span
                     className={cn(
                       'rounded-full border px-2 py-0.5 text-[10px] font-semibold tracking-wide uppercase',
-                      config.accent.badge,
+                      isTypebot
+                        ? 'border-secondary/40 bg-secondary/25 text-[#e8b39a]'
+                        : config!.accent.badge,
                     )}
                   >
-                    {config.short}
+                    {isTypebot ? 'Typebot' : config!.short}
                   </span>
                 </h1>
               </div>
             </div>
 
             <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => setReloadNonce((n) => n + 1)}
-                className="glass-soft flex items-center gap-2 px-3 py-2 text-sm text-white/70 transition hover:text-white"
-              >
-                <RefreshCw className={cn('size-4', bodyLoading && 'animate-spin')} aria-hidden />
-                <span className="hidden sm:inline">Atualizar</span>
-              </button>
+              {/* Atualizar so nas abas de ads; na Typebot o LeadsPanel tem o seu. */}
+              {!isTypebot && (
+                <button
+                  type="button"
+                  onClick={() => setReloadNonce((n) => n + 1)}
+                  className="glass-soft flex items-center gap-2 px-3 py-2 text-sm text-white/70 transition hover:text-white"
+                >
+                  <RefreshCw className={cn('size-4', bodyLoading && 'animate-spin')} aria-hidden />
+                  <span className="hidden sm:inline">Atualizar</span>
+                </button>
+              )}
               <button
                 type="button"
                 onClick={() => void handleLogout()}
@@ -111,7 +120,7 @@ export default function AdsDashboard() {
             </div>
           </div>
 
-          {/* Seletor de aba: as duas plataformas de ads + a campanha do Typebot. */}
+          {/* Seletor de aba: as duas plataformas de ads + a lista de leads do Typebot. */}
           <div
             role="tablist"
             aria-label="Painel"
@@ -141,12 +150,16 @@ export default function AdsDashboard() {
           </div>
         </header>
 
-        <AdsPlatformBody
-          key={tab}
-          tab={config}
-          reloadNonce={reloadNonce}
-          onLoadingChange={handleLoadingChange}
-        />
+        {isTypebot ? (
+          <LeadsPanel />
+        ) : (
+          <AdsPlatformBody
+            key={tab}
+            tab={config!}
+            reloadNonce={reloadNonce}
+            onLoadingChange={handleLoadingChange}
+          />
+        )}
       </div>
     </div>
   );
@@ -180,8 +193,7 @@ function AdsPlatformBody({
     try {
       const qs = new URLSearchParams({ period });
       if (tab.campaign) qs.set('campaign', tab.campaign);
-      if (tab.resultsFromTypebot) qs.set('results', 'typebot');
-      const response = await fetch(`/api/ads/${tab.apiPlatform}?${qs.toString()}`, {
+      const response = await fetch(`/api/ads/${tab.id}?${qs.toString()}`, {
         cache: 'no-store',
       });
       if (response.status === 401) {

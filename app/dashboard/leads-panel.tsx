@@ -25,6 +25,7 @@ import {
   PERIODS,
   UTM_DIMENSIONS,
   countByDay,
+  countInPreviousPeriod,
   dayKey,
   dayKeysBack,
   filterByPeriod,
@@ -222,23 +223,27 @@ export default function LeadsPanel() {
   const stats = useMemo(() => {
     const all = leads ?? [];
     const todayKey = dayKey(new Date(now));
-    const yesterdayKey = dayKey(new Date(now - 86_400_000));
-
     const todayCount = all.filter((lead) => dayKey(new Date(lead.createdAt)) === todayKey).length;
-    const yesterdayCount = all.filter((lead) => dayKey(new Date(lead.createdAt)) === yesterdayKey).length;
     const chartDays = period === '30d' ? 30 : period === '14d' || period === 'all' ? 14 : 7;
+
+    // Cards seguem o PERIODO selecionado: total no periodo e variacao contra a
+    // janela anterior de mesma duracao.
+    const visible = filterByPeriod(all, period, now);
+    const previousCount = countInPreviousPeriod(all, period, now);
 
     return {
       total: all.length,
       todayCount,
-      yesterdayCount,
-      delta: todayCount - yesterdayCount,
-      visible: filterByPeriod(all, period, now),
+      periodCount: visible.length,
+      previousCount,
+      periodDelta: visible.length - previousCount,
+      visible,
       series: countByDay(all, dayKeysBack(chartDays, now)),
     };
   }, [leads, period, now]);
 
   const isLoading = leads === null;
+  const isAllPeriod = period === 'all';
   const periodLabel = `${PERIODS.find((item) => item.id === period)?.label} - ${periodRangeLabel(period, now)}`;
 
   const views: { id: View; label: string; icon: React.ReactNode }[] = [
@@ -338,29 +343,41 @@ export default function LeadsPanel() {
       {view === 'overview' ? (
         <>
           <section className="mb-5 grid grid-cols-1 gap-4 md:grid-cols-2">
+            {/* Card principal: total de leads DENTRO do periodo selecionado. */}
             <StatCard
-              label="Leads hoje"
+              label={isAllPeriod ? 'Total de leads' : 'Leads no periodo'}
               accent="copper"
               icon={<Users className="size-4" aria-hidden />}
-              value={isLoading ? null : String(stats.todayCount)}
-              caption={formatFullDate(dayKey(new Date(now)))}
+              value={isLoading ? null : String(stats.periodCount)}
+              caption={periodRangeLabel(period, now)}
             />
-            <StatCard
-              label="Hoje vs. ontem"
-              // Aqui a cor carrega significado (subiu/caiu), entao ela manda.
-              accent={stats.delta > 0 ? 'positive' : stats.delta < 0 ? 'negative' : 'copper'}
-              icon={
-                stats.delta > 0 ? (
-                  <TrendingUp className="size-4" aria-hidden />
-                ) : stats.delta < 0 ? (
-                  <TrendingDown className="size-4" aria-hidden />
-                ) : (
-                  <Minus className="size-4" aria-hidden />
-                )
-              }
-              value={isLoading ? null : `${stats.delta > 0 ? '+' : ''}${stats.delta}`}
-              caption={`${stats.yesterdayCount} lead(s) ontem`}
-            />
+            {/* "Todo o periodo" nao tem anterior para comparar -> mostra hoje. */}
+            {isAllPeriod ? (
+              <StatCard
+                label="Leads hoje"
+                accent="copper"
+                icon={<Users className="size-4" aria-hidden />}
+                value={isLoading ? null : String(stats.todayCount)}
+                caption={formatFullDate(dayKey(new Date(now)))}
+              />
+            ) : (
+              <StatCard
+                label="vs. periodo anterior"
+                // Aqui a cor carrega significado (subiu/caiu), entao ela manda.
+                accent={stats.periodDelta > 0 ? 'positive' : stats.periodDelta < 0 ? 'negative' : 'copper'}
+                icon={
+                  stats.periodDelta > 0 ? (
+                    <TrendingUp className="size-4" aria-hidden />
+                  ) : stats.periodDelta < 0 ? (
+                    <TrendingDown className="size-4" aria-hidden />
+                  ) : (
+                    <Minus className="size-4" aria-hidden />
+                  )
+                }
+                value={isLoading ? null : `${stats.periodDelta > 0 ? '+' : ''}${stats.periodDelta}`}
+                caption={`${stats.previousCount} no periodo anterior`}
+              />
+            )}
           </section>
 
           <section className="grid grid-cols-1 gap-4 lg:grid-cols-2">

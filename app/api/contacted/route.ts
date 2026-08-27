@@ -3,14 +3,27 @@ import { SupabaseConfigError, listContacted, markContacted, unmarkContacted } fr
 
 export const dynamic = 'force-dynamic';
 
+/** Mensagem curta (sem stack) — inclui o codigo da causa quando houver, ex.:
+ *  "fetch failed (ENOTFOUND)" quando o projeto Supabase esta pausado/fora do ar. */
+function describe(error: unknown): string {
+  if (error instanceof Error) {
+    const cause = (error as { cause?: { code?: string } }).cause;
+    return cause?.code ? `${error.message} (${cause.code})` : error.message;
+  }
+  return String(error);
+}
+
 function errorResponse(error: unknown) {
-  console.error('[api/contacted]', error);
   if (error instanceof SupabaseConfigError) {
+    console.error('[api/contacted] config ausente:', error.missing.join(', '));
     return NextResponse.json(
       { error: `Configuracao ausente no servidor: ${error.missing.join(', ')}.`, code: 'config_missing' },
       { status: 500 },
     );
   }
+  // Banco fora do ar (ex.: projeto Supabase pausado): uma linha, sem stack —
+  // a lista de leads segue funcionando, so a marca de "contatado" nao persiste.
+  console.warn('[api/contacted] banco de marcacoes indisponivel:', describe(error));
   return NextResponse.json(
     { error: 'O banco de marcacoes nao respondeu.', code: 'upstream_error' },
     { status: 502 },

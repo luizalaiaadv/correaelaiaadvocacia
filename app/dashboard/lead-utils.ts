@@ -143,6 +143,25 @@ export function filterByPeriod(leads: Lead[], period: PeriodId, now = Date.now()
   return leads.filter((lead) => allowed.has(dayKey(new Date(lead.createdAt))));
 }
 
+/**
+ * Quantos leads cairam no periodo imediatamente ANTERIOR, de mesma duracao, para
+ * o card de comparacao ("vs periodo anterior"). "Todo o periodo" nao tem anterior.
+ */
+export function countInPreviousPeriod(leads: Lead[], period: PeriodId, now = Date.now()): number {
+  if (period === 'all') return 0;
+
+  if (period === 'today' || period === 'yesterday') {
+    // today -> compara com ontem; yesterday -> compara com anteontem.
+    const target = dayKey(new Date(now - (period === 'today' ? 1 : 2) * DAY_MS));
+    return leads.filter((lead) => dayKey(new Date(lead.createdAt)) === target).length;
+  }
+
+  // Janela de N dias que termina onde a atual comeca (sem sobrepor).
+  const days = periodWindowDays(period);
+  const allowed = new Set(dayKeysBack(days, now - days * DAY_MS));
+  return leads.filter((lead) => allowed.has(dayKey(new Date(lead.createdAt)))).length;
+}
+
 export function countByDay(leads: Lead[], keys: string[]): { key: string; count: number }[] {
   const counts = new Map<string, number>(keys.map((key) => [key, 0]));
   for (const lead of leads) {
