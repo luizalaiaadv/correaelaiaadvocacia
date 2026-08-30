@@ -22,6 +22,13 @@ export const formatBRLCompact = (value: number) => brlCompact.format(value);
 export const formatInt = (value: number) => int.format(value);
 export const formatCompact = (value: number) => compact.format(value);
 export const formatPercent = (value: number) => `${(value * 100).toLocaleString('pt-BR', { maximumFractionDigits: 2 })}%`;
+/** Numero com 1 casa (frequencia, segundos assistidos). */
+export const formatDecimal = (value: number) =>
+  value.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+/** Segundos -> "3,4s" (tempo medio de exibicao). */
+export const formatSeconds = (value: number) => `${formatDecimal(value)}s`;
+/** Divisao segura: sem denominador, a metrica nao existe (null, nao zero). */
+export const ratio = (a: number, b: number): number | null => (b > 0 ? a / b : null);
 
 /** Rotulo do intervalo — reflete exatamente a janela usada nos dados de ads. */
 export function adsPeriodRangeLabel(period: PeriodId, now = Date.now()): string {

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { fetchMetaAds, MetaConfigError } from '@/lib/meta-ads';
 import { fetchGoogleAds, GoogleConfigError } from '@/lib/google-ads';
-import type { PeriodId } from '@/app/dashboard/lead-utils';
+import { isDateKey, type DateRange, type PeriodId } from '@/app/dashboard/lead-utils';
 
 export const dynamic = 'force-dynamic';
 
@@ -18,13 +18,20 @@ export async function GET(
   // Escopo opcional numa campanha, pelo ID do Meta.
   const campaignId = url.searchParams.get('campaignId') || undefined;
 
+  // Intervalo personalizado (date picker). So vale se as DUAS datas forem
+  // YYYY-MM-DD validas; caso contrario cai no preset.
+  const since = url.searchParams.get('since');
+  const until = url.searchParams.get('until');
+  const range: DateRange | undefined =
+    isDateKey(since) && isDateKey(until) ? { since, until } : undefined;
+
   try {
     if (platform === 'meta') {
-      const data = await fetchMetaAds(period, { campaignId });
+      const data = await fetchMetaAds(period, { campaignId, range });
       return NextResponse.json(data, { headers: { 'Cache-Control': 'no-store' } });
     }
     if (platform === 'google') {
-      const data = await fetchGoogleAds(period);
+      const data = await fetchGoogleAds(period, range);
       return NextResponse.json(data, { headers: { 'Cache-Control': 'no-store' } });
     }
     return NextResponse.json({ error: 'Plataforma invalida.' }, { status: 404 });

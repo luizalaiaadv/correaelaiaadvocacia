@@ -1,5 +1,5 @@
-import { adsPeriodDateRange, type PeriodId } from '@/app/dashboard/lead-utils';
-import type { AdsResponse } from '@/lib/meta-ads';
+import { resolveAdsRange, type DateRange, type PeriodId } from '@/app/dashboard/lead-utils';
+import type { AdsBalance, AdsResponse } from '@/lib/meta-ads';
 
 /**
  * Leitura da Google Ads API (REST) para o painel /dash-ads. Server-side apenas.
@@ -80,6 +80,7 @@ type GaqlRow = {
   segments?: { date?: string };
   campaign?: { name?: string };
   metrics?: { costMicros?: string; impressions?: string; clicks?: string; conversions?: number };
+  accountBudget?: { adjustedSpendingLimitMicros?: string; amountServedMicros?: string; status?: string };
 };
 
 async function gaql(cfg: ReturnType<typeof config>, token: string, query: string): Promise<GaqlRow[]> {
@@ -120,19 +121,43 @@ async function gaql(cfg: ReturnType<typeof config>, token: string, query: string
 const micros = (v?: string) => (v ? Number(v) / 1e6 : 0);
 const int = (v?: string) => (v ? Number(v) : 0);
 
+/**
+ * Saldo restante da conta = limite do orcamento aprovado - valor ja servido
+ * (contas com faturamento mensal/consolidado). Conta auto-pay no cartao nao tem
+ * account_budget -> retorna undefined (sem alerta, sem inventar). E um "extra":
+ * se a consulta falhar, o resto do painel do Google ainda vale.
+ */
+async function fetchGoogleBalance(cfg: ReturnType<typeof config>, token: string): Promise<AdsBalance | undefined> {
+  try {
+    const rows = await gaql(
+      cfg,
+      token,
+      `SELECT account_budget.adjusted_spending_limit_micros, account_budget.amount_served_micros FROM account_budget WHERE account_budget.status = 'APPROVED'`,
+    );
+    const b = rows[0]?.accountBudget;
+    if (!b?.adjustedSpendingLimitMicros) return undefined;
+    const limit = micros(b.adjustedSpendingLimitMicros);
+    const served = micros(b.amountServedMicros);
+    return { remaining: Math.max(0, limit - served), currency: 'BRL', limit, label: 'Orçamento da conta' };
+  } catch {
+    return undefined;
+  }
+}
+
 const cache = new Map<string, { at: number; value: AdsResponse }>();
 
-export async function fetchGoogleAds(period: PeriodId): Promise<AdsResponse> {
-  const cached = cache.get(period);
+export async function fetchGoogleAds(period: PeriodId, customRange?: DateRange): Promise<AdsResponse> {
+  const { since, until } = resolveAdsRange(period, customRange);
+  const cacheKey = `${since}:${until}`;
+  const cached = cache.get(cacheKey);
   if (cached && Date.now() - cached.at < CACHE_TTL_MS) return cached.value;
 
   const cfg = config();
   const token = await getAccessToken(cfg);
-  const { since, until } = adsPeriodDateRange(period);
   const range = `segments.date BETWEEN '${since}' AND '${until}'`;
 
-  // 1) Serie diaria (nivel conta). 2) Campanhas ATIVAS agregadas no periodo.
-  const [dailyRows, campaignRows] = await Promise.all([
+  // 1) Serie diaria (nivel conta). 2) Campanhas ATIVAS agregadas. 3) Saldo da conta.
+  const [dailyRows, campaignRows, balance] = await Promise.all([
     gaql(
       cfg,
       token,
@@ -143,6 +168,7 @@ export async function fetchGoogleAds(period: PeriodId): Promise<AdsResponse> {
       token,
       `SELECT campaign.name, metrics.cost_micros, metrics.clicks, metrics.conversions FROM campaign WHERE ${range} AND campaign.status = 'ENABLED'`,
     ),
+    fetchGoogleBalance(cfg, token),
   ]);
 
   const series = dailyRows
@@ -178,9 +204,10 @@ export async function fetchGoogleAds(period: PeriodId): Promise<AdsResponse> {
     },
     series,
     campaigns: campaigns.map((c) => ({ ...c, results: Math.round(c.results) })),
+    balance,
     fetchedAt: new Date().toISOString(),
   };
 
-  cache.set(period, { at: Date.now(), value });
+  cache.set(cacheKey, { at: Date.now(), value });
   return value;
 }

@@ -1,4 +1,4 @@
-import { adsPeriodDateRange, type PeriodId } from '@/app/dashboard/lead-utils';
+import { resolveAdsRange, type DateRange, type PeriodId } from '@/app/dashboard/lead-utils';
 
 /**
  * Leitura da Meta Marketing API para o painel /dash-ads. Server-side apenas
@@ -15,16 +15,57 @@ export class MetaConfigError extends Error {
   }
 }
 
+/** Saldo restante da CONTA (independe do periodo/campanha). `remaining` e `limit`
+ *  ja vem na unidade da moeda (nao em centavos/micros). */
+export type AdsBalance = {
+  remaining: number;
+  currency: string;
+  /** Teto (limite de gasto / orcamento da conta), para a UI marcar "saldo baixo". */
+  limit?: number;
+  /** Origem do numero, ex.: "Saldo disponível" (Meta pre-pago) ou "Orçamento da conta". */
+  label?: string;
+};
+
+/**
+ * Metricas de video e de perfil — o que importa numa campanha de TRAFEGO PARA O
+ * PERFIL (ganhar seguidores) com criativo em video. So o Meta preenche.
+ */
+export type AdsVideoStats = {
+  reach: number;
+  frequency: number;
+  cpm: number;
+  /** Reproducoes iniciadas (o video comecou a rodar). */
+  plays: number;
+  /** Views de 3 segundos — base do "hook rate". */
+  views3s: number;
+  /** Assistiu 15s ou ate o fim. */
+  thruplays: number;
+  avgWatchSeconds: number;
+  /** Retencao: quantos chegaram a 25/50/75/100% do video. */
+  p25: number;
+  p50: number;
+  p75: number;
+  p100: number;
+  saves: number;
+  shares: number;
+  /** Visitas ao perfil no periodo (Instagram insights). */
+  profileViews?: number;
+};
+
 export type AdsResponse = {
   sample: boolean;
   totals: { spend: number; impressions: number; clicks: number; results: number };
   series: { key: string; spend: number }[];
   campaigns: { name: string; spend: number; clicks: number; results: number }[];
+  /** Metricas de video/perfil (Meta). Ausente no Google. */
+  video?: AdsVideoStats;
   followers?: number;
   /** Seguidores ganhos no periodo (como o Business Suite). Requer permissao
    *  instagram_manage_insights no token; sem ela, fica indefinido. */
   followersGained?: number;
   followersHandle?: string;
+  /** Saldo restante da conta de anuncios (alerta no topo do painel). */
+  balance?: AdsBalance;
   fetchedAt: string;
 };
 
@@ -40,12 +81,11 @@ function config() {
   return { token: token as string, account };
 }
 
-/** time_range da Meta (JSON) para o periodo. Usa a mesma janela do Google
- *  (N dias terminando ontem), para os dois paineis baterem entre si e com as
- *  interfaces nativas. */
-function metaTimeRange(period: PeriodId): string {
-  const { since, until } = adsPeriodDateRange(period);
-  return JSON.stringify({ since, until });
+/** time_range da Meta (JSON) a partir da janela ja resolvida (preset ou
+ *  personalizada). Mesma janela do Google, para os dois paineis baterem entre si
+ *  e com as interfaces nativas. */
+function metaTimeRange(range: DateRange): string {
+  return JSON.stringify({ since: range.since, until: range.until });
 }
 
 async function graph(path: string, params: Record<string, string>, token: string): Promise<unknown> {
@@ -61,6 +101,9 @@ async function graph(path: string, params: Record<string, string>, token: string
   return data;
 }
 
+/** Lista de acoes da Graph API: [{action_type, value}]. */
+type ActionList = { action_type: string; value: string }[];
+
 type InsightRow = {
   date_start?: string;
   spend?: string;
@@ -68,12 +111,52 @@ type InsightRow = {
   clicks?: string;
   campaign_id?: string;
   campaign_name?: string;
-  actions?: { action_type: string; value: string }[];
+  reach?: string;
+  frequency?: string;
+  cpm?: string;
+  actions?: ActionList;
+  video_play_actions?: ActionList;
+  video_thruplay_watched_actions?: ActionList;
+  video_avg_time_watched_actions?: ActionList;
+  video_p25_watched_actions?: ActionList;
+  video_p50_watched_actions?: ActionList;
+  video_p75_watched_actions?: ActionList;
+  video_p100_watched_actions?: ActionList;
 };
 
+/** Campos de insights pedidos quando queremos as metricas de video/perfil. */
+const VIDEO_FIELDS =
+  'reach,frequency,cpm,video_play_actions,video_thruplay_watched_actions,video_avg_time_watched_actions,' +
+  'video_p25_watched_actions,video_p50_watched_actions,video_p75_watched_actions,video_p100_watched_actions';
+
 const num = (v?: string) => (v ? Number(v) : 0);
-const linkClicks = (row: InsightRow) =>
-  num(row.actions?.find((a) => a.action_type === 'link_click')?.value);
+/** Valor de um action_type dentro de uma lista de acoes. */
+const action = (list: ActionList | undefined, type = 'video_view') =>
+  num(list?.find((a) => a.action_type === type)?.value);
+const linkClicks = (row: InsightRow) => action(row.actions, 'link_click');
+
+/** Monta as metricas de video/perfil a partir da linha de insights da campanha. */
+function videoStats(row: InsightRow | undefined, profileViews?: number): AdsVideoStats | undefined {
+  if (!row) return undefined;
+  return {
+    reach: num(row.reach),
+    frequency: num(row.frequency),
+    cpm: num(row.cpm),
+    plays: action(row.video_play_actions),
+    // Na Graph API, actions.video_view = visualizacoes de 3 segundos.
+    views3s: action(row.actions, 'video_view'),
+    thruplays: action(row.video_thruplay_watched_actions),
+    avgWatchSeconds: action(row.video_avg_time_watched_actions),
+    p25: action(row.video_p25_watched_actions),
+    p50: action(row.video_p50_watched_actions),
+    p75: action(row.video_p75_watched_actions),
+    p100: action(row.video_p100_watched_actions),
+    saves: action(row.actions, 'onsite_conversion.post_save'),
+    // action_type "post" = compartilhamentos da publicacao.
+    shares: action(row.actions, 'post'),
+    profileViews,
+  };
+}
 
 async function fetchFollowers(
   token: string,
@@ -97,6 +180,51 @@ async function fetchFollowers(
   return {};
 }
 
+/** Extrai um valor em BRL de um texto tipo "Saldo disponível (R$1.234,56 BRL)". */
+function parseBrl(text: string): number | undefined {
+  const m = text.match(/R\$\s*([\d.]+),(\d{2})/);
+  if (!m) return undefined;
+  const value = Number(`${m[1].replace(/\./g, '')}.${m[2]}`);
+  return Number.isFinite(value) ? value : undefined;
+}
+
+/**
+ * Saldo restante da conta de anuncios. Conta pre-paga -> usa o "Saldo disponível"
+ * do funding source (o mesmo que aparece no gerenciador). Sem pre-pago -> quanto
+ * falta para o limite de gasto (spend_cap - amount_spent). E um "extra": se
+ * falhar, o painel ainda vale (retorna undefined).
+ */
+async function fetchAccountBalance(account: string, token: string): Promise<AdsBalance | undefined> {
+  try {
+    const d = (await graph(
+      account,
+      { fields: 'currency,spend_cap,amount_spent,funding_source_details' },
+      token,
+    )) as {
+      currency?: string;
+      spend_cap?: string;
+      amount_spent?: string;
+      funding_source_details?: { display_string?: string; type?: number };
+    };
+
+    const currency = d.currency ?? 'BRL';
+    const cap = d.spend_cap ? Number(d.spend_cap) : 0;
+    const spent = d.amount_spent ? Number(d.amount_spent) : 0;
+    const limit = cap > 0 ? cap / 100 : undefined;
+
+    const prepaid = parseBrl(d.funding_source_details?.display_string ?? '');
+    if (prepaid !== undefined) {
+      return { remaining: prepaid, currency, limit, label: 'Saldo disponível' };
+    }
+    if (cap > 0) {
+      return { remaining: Math.max(0, (cap - spent) / 100), currency, limit, label: 'Disponível no limite' };
+    }
+    return undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 const DAY_S = 86400;
 /** Sao Paulo e UTC-3 (sem horario de verao desde 2019). */
 const spTs = (d: string, endOfDay = false) =>
@@ -114,10 +242,10 @@ const spTs = (d: string, endOfDay = false) =>
  */
 async function fetchFollowerGrowth(
   igId: string,
-  period: PeriodId,
+  range: DateRange,
   token: string,
 ): Promise<number | undefined> {
-  const { since, until } = adsPeriodDateRange(period);
+  const { since, until } = range;
   // Folga de meio dia dos dois lados para nao perder o bucket do Pacifico; limita
   // a 30 dias, que e o maximo que o follower_count cobre.
   const untilTs = spTs(until, true) + DAY_S / 2;
@@ -148,6 +276,37 @@ async function fetchFollowerGrowth(
 }
 
 /**
+ * Visitas ao perfil no periodo (IG insights). Exige `metric_type=total_value`,
+ * que devolve o total da janela (nao buckets por dia). Serve para a taxa
+ * "visitou o perfil -> virou seguidor".
+ */
+async function fetchProfileViews(
+  igId: string,
+  range: DateRange,
+  token: string,
+): Promise<number | undefined> {
+  const sinceTs = spTs(range.since);
+  const untilTs = spTs(range.until, true);
+  try {
+    const data = (await graph(
+      `${igId}/insights`,
+      {
+        metric: 'profile_views',
+        period: 'day',
+        metric_type: 'total_value',
+        since: String(sinceTs),
+        until: String(untilTs),
+      },
+      token,
+    )) as { data?: { name?: string; total_value?: { value?: number } }[] };
+
+    return data.data?.find((m) => m.name === 'profile_views')?.total_value?.value;
+  } catch {
+    return undefined;
+  }
+}
+
+/**
  * Painel de UMA campanha (por ID). Os totais e a serie diaria vem do proprio no
  * da campanha (`{campaignId}/insights`), entao ja chegam escopados — nada de
  * somar a conta inteira. Escopar por ID (nao por nome) e imune a acento,
@@ -156,19 +315,26 @@ async function fetchFollowerGrowth(
  */
 async function fetchCampaignScoped(
   campaignId: string,
-  period: PeriodId,
+  account: string,
+  range: DateRange,
   timeRange: string,
   wantFollowers: boolean,
   token: string,
 ): Promise<AdsResponse> {
-  const [totalsData, dailyData, follow] = (await Promise.all([
-    graph(`${campaignId}/insights`, { fields: 'campaign_name,spend,impressions,clicks,actions', time_range: timeRange }, token),
+  const [totalsData, dailyData, follow, balance] = (await Promise.all([
+    graph(`${campaignId}/insights`, { fields: `campaign_name,spend,impressions,clicks,actions,${VIDEO_FIELDS}`, time_range: timeRange }, token),
     graph(`${campaignId}/insights`, { fields: 'spend', time_range: timeRange, time_increment: '1' }, token),
     wantFollowers ? fetchFollowers(token) : Promise.resolve({} as Awaited<ReturnType<typeof fetchFollowers>>),
-  ])) as [{ data?: InsightRow[] }, { data?: InsightRow[] }, Awaited<ReturnType<typeof fetchFollowers>>];
+    fetchAccountBalance(account, token),
+  ])) as [{ data?: InsightRow[] }, { data?: InsightRow[] }, Awaited<ReturnType<typeof fetchFollowers>>, AdsBalance | undefined];
 
-  const followersGained =
-    wantFollowers && follow.igId ? await fetchFollowerGrowth(follow.igId, period, token) : undefined;
+  // Seguidores ganhos e visitas ao perfil dependem do IG (dai serem sequenciais).
+  const [followersGained, profileViews] = follow.igId
+    ? await Promise.all([
+        wantFollowers ? fetchFollowerGrowth(follow.igId, range, token) : Promise.resolve(undefined),
+        fetchProfileViews(follow.igId, range, token),
+      ])
+    : [undefined, undefined];
 
   const totalRow = totalsData.data?.[0];
   const totals = {
@@ -191,40 +357,44 @@ async function fetchCampaignScoped(
     totals,
     series,
     campaigns,
+    video: videoStats(totalRow, profileViews),
     followers: wantFollowers ? follow.followers : undefined,
     followersGained,
     followersHandle: wantFollowers ? follow.handle : undefined,
+    balance,
     fetchedAt: new Date().toISOString(),
   };
 }
 
 /** Opcoes do painel Meta: escopar numa campanha (por ID) e/ou incluir seguidores. */
-export type MetaOptions = { campaignId?: string; followers?: boolean };
+export type MetaOptions = { campaignId?: string; followers?: boolean; range?: DateRange };
 
 // Cache simples em memoria (por instancia), chaveado por periodo + opcoes.
 const cache = new Map<string, { at: number; value: AdsResponse }>();
 
 export async function fetchMetaAds(period: PeriodId, options: MetaOptions = {}): Promise<AdsResponse> {
-  const { campaignId, followers: wantFollowers = true } = options;
-  const cacheKey = `${period}|${campaignId ?? ''}|${wantFollowers}`;
+  const { campaignId, followers: wantFollowers = true, range: customRange } = options;
+  const range = resolveAdsRange(period, customRange);
+  const cacheKey = `${range.since}:${range.until}|${campaignId ?? ''}|${wantFollowers}`;
   const cached = cache.get(cacheKey);
   if (cached && Date.now() - cached.at < CACHE_TTL_MS) return cached.value;
 
   const { token, account } = config();
-  const timeRange = metaTimeRange(period);
+  const timeRange = metaTimeRange(range);
 
   if (campaignId) {
-    const scoped = await fetchCampaignScoped(campaignId, period, timeRange, wantFollowers, token);
+    const scoped = await fetchCampaignScoped(campaignId, account, range, timeRange, wantFollowers, token);
     cache.set(cacheKey, { at: Date.now(), value: scoped });
     return scoped;
   }
 
-  // 1) Totais da conta. 2) Serie diaria de investimento. 3) Campanhas ativas.
-  const [totalsData, dailyData, activeCampaigns, follow] = await Promise.all([
-    graph(`${account}/insights`, { fields: 'spend,impressions,clicks,actions', time_range: timeRange, level: 'account' }, token) as Promise<{ data?: InsightRow[] }>,
+  // 1) Totais da conta. 2) Serie diaria. 3) Campanhas ativas. 4) Seguidores. 5) Saldo.
+  const [totalsData, dailyData, activeCampaigns, follow, balance] = await Promise.all([
+    graph(`${account}/insights`, { fields: `spend,impressions,clicks,actions,${VIDEO_FIELDS}`, time_range: timeRange, level: 'account' }, token) as Promise<{ data?: InsightRow[] }>,
     graph(`${account}/insights`, { fields: 'spend', time_range: timeRange, level: 'account', time_increment: '1' }, token) as Promise<{ data?: InsightRow[] }>,
     graph(`${account}/campaigns`, { fields: 'id,name', filtering: '[{"field":"effective_status","operator":"IN","value":["ACTIVE"]}]', limit: '100' }, token) as Promise<{ data?: { id: string; name: string }[] }>,
     wantFollowers ? fetchFollowers(token) : Promise.resolve({} as Awaited<ReturnType<typeof fetchFollowers>>),
+    fetchAccountBalance(account, token),
   ]);
 
   const totalRow = totalsData.data?.[0];
@@ -259,17 +429,24 @@ export async function fetchMetaAds(period: PeriodId, options: MetaOptions = {}):
       .sort((a, b) => b.spend - a.spend);
   }
 
-  // Seguidores ganhos no periodo (se o token tiver permissao de insights do IG).
-  const followersGained = follow.igId ? await fetchFollowerGrowth(follow.igId, period, token) : undefined;
+  // Seguidores ganhos e visitas ao perfil (se o token tiver insights do IG).
+  const [followersGained, profileViews] = follow.igId
+    ? await Promise.all([
+        fetchFollowerGrowth(follow.igId, range, token),
+        fetchProfileViews(follow.igId, range, token),
+      ])
+    : [undefined, undefined];
 
   const value: AdsResponse = {
     sample: false,
     totals,
     series,
     campaigns,
+    video: videoStats(totalRow, profileViews),
     followers: follow.followers,
     followersGained,
     followersHandle: follow.handle,
+    balance,
     fetchedAt: new Date().toISOString(),
   };
 

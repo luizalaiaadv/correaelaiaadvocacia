@@ -122,6 +122,35 @@ export function adsPeriodDateRange(period: PeriodId, now = Date.now()): { since:
   }
 }
 
+/** Janela de datas explicita (YYYY-MM-DD), usada pelo filtro personalizado. */
+export type DateRange = { since: string; until: string };
+
+/** Aceita so YYYY-MM-DD valido — o valor vem da URL/query, entao e entrada nao confiavel. */
+export function isDateKey(value: string | null | undefined): value is string {
+  if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const t = Date.parse(`${value}T12:00:00Z`);
+  return Number.isFinite(t);
+}
+
+/**
+ * Janela final usada pelos paineis de ads: o intervalo personalizado (quando
+ * escolhido no date picker) tem prioridade sobre o preset.
+ */
+export function resolveAdsRange(period: PeriodId, custom?: DateRange, now = Date.now()): DateRange {
+  if (custom && isDateKey(custom.since) && isDateKey(custom.until)) {
+    // Tolera o usuario escolher as datas invertidas.
+    return custom.since <= custom.until
+      ? custom
+      : { since: custom.until, until: custom.since };
+  }
+  return adsPeriodDateRange(period, now);
+}
+
+/** Rotulo "dd/mm - dd/mm" de uma janela explicita, para o filtro personalizado. */
+export function rangeLabel({ since, until }: DateRange): string {
+  return since === until ? formatFullDate(since) : `${formatShortDate(since)} - ${formatShortDate(until)}`;
+}
+
 /** Rotulo com o intervalo de datas coberto pelo filtro, exibido abaixo do nome. */
 export function periodRangeLabel(period: PeriodId, now = Date.now()): string {
   if (period === 'all') return 'todos os leads';

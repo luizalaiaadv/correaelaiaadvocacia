@@ -39,6 +39,7 @@ import {
   type PeriodId,
 } from './lead-utils';
 import { requestNotificationPermission, useLeadNotifications } from './use-lead-notifications';
+import { useClientNow } from './use-client-now';
 import { useScrollFade } from './use-scroll-fade';
 import { useContactedLeads } from './use-contacted-leads';
 import LeadDetailsModal from './lead-details-modal';
@@ -164,7 +165,9 @@ export default function LeadsPanel() {
   const [view, setView] = useState<View>('overview');
   const [notificationsOn, setNotificationsOn] = useState(false);
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
-  const [now, setNow] = useState(() => Date.now());
+  // Relogio so no cliente (a pagina e pre-renderizada) e atualizado a cada 30s
+  // para os rotulos relativos ("ha 3 min") nao envelhecerem entre um fetch e outro.
+  const now = useClientNow(30_000);
 
   const { toasts, dismiss } = useLeadNotifications(leads, notificationsOn);
   const { contacted, mark, toggle: toggleContacted, markAll, unmarkAll } = useContactedLeads();
@@ -203,12 +206,6 @@ export default function LeadsPanel() {
     return () => clearInterval(interval);
   }, [load]);
 
-  // Mantem os rotulos relativos ("ha 3 min") corretos entre um fetch e outro.
-  useEffect(() => {
-    const interval = setInterval(() => setNow(Date.now()), 30_000);
-    return () => clearInterval(interval);
-  }, []);
-
   function toggleNotifications() {
     if (notificationsOn) {
       setNotificationsOn(false);
@@ -222,14 +219,17 @@ export default function LeadsPanel() {
 
   const stats = useMemo(() => {
     const all = leads ?? [];
-    const todayKey = dayKey(new Date(now));
+    // Os numeros so aparecem com os leads carregados (depois da montagem), entao
+    // aqui o fallback nunca chega a ser renderizado no HTML do servidor.
+    const at = now ?? Date.now();
+    const todayKey = dayKey(new Date(at));
     const todayCount = all.filter((lead) => dayKey(new Date(lead.createdAt)) === todayKey).length;
     const chartDays = period === '30d' ? 30 : period === '14d' || period === 'all' ? 14 : 7;
 
     // Cards seguem o PERIODO selecionado: total no periodo e variacao contra a
     // janela anterior de mesma duracao.
-    const visible = filterByPeriod(all, period, now);
-    const previousCount = countInPreviousPeriod(all, period, now);
+    const visible = filterByPeriod(all, period, at);
+    const previousCount = countInPreviousPeriod(all, period, at);
 
     return {
       total: all.length,
@@ -238,13 +238,15 @@ export default function LeadsPanel() {
       previousCount,
       periodDelta: visible.length - previousCount,
       visible,
-      series: countByDay(all, dayKeysBack(chartDays, now)),
+      series: countByDay(all, dayKeysBack(chartDays, at)),
     };
   }, [leads, period, now]);
 
-  const isLoading = leads === null;
+  // Sem os leads (ou antes de montar) nao ha numero real para mostrar.
+  const isLoading = leads === null || now === null;
   const isAllPeriod = period === 'all';
-  const periodLabel = `${PERIODS.find((item) => item.id === period)?.label} - ${periodRangeLabel(period, now)}`;
+  const presetLabel = PERIODS.find((item) => item.id === period)?.label ?? '';
+  const periodLabel = now === null ? presetLabel : `${presetLabel} - ${periodRangeLabel(period, now)}`;
 
   const views: { id: View; label: string; icon: React.ReactNode }[] = [
     { id: 'overview', label: 'Visao geral', icon: <LayoutDashboard className="size-4" aria-hidden /> },
@@ -323,7 +325,10 @@ export default function LeadsPanel() {
                 )}
               >
                 <span className="block text-xs font-semibold tracking-wide uppercase">{item.label}</span>
-                <span className="block text-[10px] opacity-70">{periodRangeLabel(item.id, now)}</span>
+                <span className="block text-[10px] opacity-70">
+                  {/* Espaco fixo ate o relogio do cliente chegar: evita pulo de layout. */}
+                  {now === null ? ' ' : periodRangeLabel(item.id, now)}
+                </span>
               </button>
             ))}
           </div>
@@ -349,7 +354,7 @@ export default function LeadsPanel() {
               accent="copper"
               icon={<Users className="size-4" aria-hidden />}
               value={isLoading ? null : String(stats.periodCount)}
-              caption={periodRangeLabel(period, now)}
+              caption={now === null ? '' : periodRangeLabel(period, now)}
             />
             {/* "Todo o periodo" nao tem anterior para comparar -> mostra hoje. */}
             {isAllPeriod ? (
@@ -358,7 +363,7 @@ export default function LeadsPanel() {
                 accent="copper"
                 icon={<Users className="size-4" aria-hidden />}
                 value={isLoading ? null : String(stats.todayCount)}
-                caption={formatFullDate(dayKey(new Date(now)))}
+                caption={now === null ? '' : formatFullDate(dayKey(new Date(now)))}
               />
             ) : (
               <StatCard
@@ -383,7 +388,7 @@ export default function LeadsPanel() {
           <section className="grid grid-cols-1 gap-4 lg:grid-cols-2">
             <Panel
               title="Leads / dia"
-              subtitle={rangeSubtitle(stats.series)}
+              subtitle={now === null ? '' : rangeSubtitle(stats.series)}
               accent="gold"
               icon={<ChartColumn className="size-4" aria-hidden />}
             >
@@ -399,7 +404,8 @@ export default function LeadsPanel() {
               <RecentLeads
                 leads={stats.visible}
                 isLoading={isLoading}
-                now={now}
+                // isLoading cobre now === null, entao a lista so renderiza montada.
+                now={now ?? 0}
                 onSelect={setSelectedLead}
                 contacted={contacted}
                 onWhatsappClick={mark}
