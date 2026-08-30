@@ -1,4 +1,4 @@
-// Service worker do dashboard de leads.
+// Service worker do painel (trafego pago + leads).
 //
 // Regra central: os dados dos leads NUNCA sao cacheados. Um dashboard "em tempo
 // real" servindo lead antigo do cache seria pior do que nao abrir. O cache cobre

@@ -1,11 +1,19 @@
 import type { Metadata, Viewport } from 'next';
-import ServiceWorkerRegistration from './sw-registration';
+import ServiceWorkerRegistration from '../dashboard/sw-registration';
 
+/**
+ * Metadados de instalacao (PWA) do painel. Ficam aqui porque /dash-ads e a tela
+ * principal — e a que a cliente instala no celular. O `manifest` cobre Android;
+ * `appleWebApp` + `icons.apple` cobrem o iPhone/iPad, que ignoram o manifest
+ * para icone e modo tela cheia e leem essas meta tags.
+ */
 export const metadata: Metadata = {
+  title: 'Painel | Correa & Laia Advocacia',
+  robots: { index: false, follow: false },
   manifest: '/manifest.webmanifest',
   appleWebApp: {
     capable: true,
-    title: 'C&L Leads',
+    title: 'C&L Painel',
     statusBarStyle: 'black-translucent',
   },
   icons: {
@@ -21,9 +29,11 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: '#78362d',
+  // Ocupa a area sob o notch quando aberto como app (iOS).
+  viewportFit: 'cover',
 };
 
-export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+export default function DashAdsLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
       {children}

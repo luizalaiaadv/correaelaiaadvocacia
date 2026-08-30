@@ -3,8 +3,8 @@
 import { useEffect } from 'react';
 
 /**
- * Registra o service worker apenas nas telas do dashboard: e a parte do projeto
- * que faz sentido instalar como app. O site publico continua sem SW.
+ * Registra o service worker nas telas do painel (/dash-ads e /dashboard): e a parte
+ * do projeto que faz sentido instalar como app. O site publico continua sem SW.
  */
 export default function ServiceWorkerRegistration() {
   useEffect(() => {

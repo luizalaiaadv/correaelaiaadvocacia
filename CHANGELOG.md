@@ -5,6 +5,28 @@ Datas em fuso de São Paulo.
 
 ## 2026-08-28
 
+### Instalacao no celular (PWA) — Android e iPhone/iPad
+O painel voltou a ser instalavel, agora a partir da tela principal (`/dash-ads`).
+
+- **O que estava quebrado:** o `manifest.webmanifest` apontava para `/dashboard` (rota
+  antiga) e so era referenciado no layout de `/dashboard`. Como `/dash-ads` nao tinha
+  layout proprio, a tela principal **nao oferecia instalacao** nem registrava o
+  service worker.
+- **Correcoes:**
+  - `manifest.webmanifest`: `start_url` agora e **`/dash-ads`**; nome atualizado para
+    "Correa & Laia | Painel" (`C&L Painel`); incluido o icone de 180x180 do iOS.
+  - Novo `app/dash-ads/layout.tsx` com `manifest`, `appleWebApp`, `apple-touch-icon`,
+    `theme-color` e `viewport-fit: cover` (area do notch), alem do registro do
+    service worker.
+  - Adicionada a meta legada **`apple-mobile-web-app-capable`** nos dois layouts: o
+    Next 16 emite so a tag moderna `mobile-web-app-capable`, que o Safari so entende
+    a partir do **iOS 16.4** — sem a legada, iPhones mais antigos abririam o app numa
+    aba comum em vez de tela cheia.
+- **Verificado no HTML gerado** (`/dash-ads` e `/dashboard`): manifest, apple-touch-icon,
+  `apple-mobile-web-app-capable`, `mobile-web-app-capable` e `theme-color` presentes.
+  Icones conferidos: 192x192, 512x512, maskable 512x512 e apple 180x180. O `proxy`
+  nao intercepta manifest/sw/icones (precisam ser publicos para a instalacao).
+
 ### Correção: erro de hidratação (hydration mismatch)
 - **Sintoma:** no console, *"A tree hydrated but some attributes of the server rendered
   HTML didn't match the client properties"*.
