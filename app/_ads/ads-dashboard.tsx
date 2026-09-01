@@ -13,6 +13,7 @@ import {
   Eye,
   Facebook,
   LogOut,
+  MessageCircle,
   MousePointerClick,
   Percent,
   Play,
@@ -24,18 +25,19 @@ import {
   TrendingUp,
   UserPlus,
   Users,
-  Wallet,
   type LucideIcon,
 } from 'lucide-react';
 import imgLogo from '@/public/logofooter.webp';
 import type { AdsResponse } from '@/lib/meta-ads';
 import { cn } from '@/lib/utils';
+import { APP_BUILD_LABEL, APP_BUILT_AT } from '@/lib/app-version';
 import { PERIODS, dayKey, rangeLabel, type DateRange, type PeriodId } from '../dashboard/lead-utils';
 import { useClientNow } from '../dashboard/use-client-now';
 import { useScrollFade } from '../dashboard/use-scroll-fade';
 import { useSessionKeepAlive } from '../dashboard/use-session-keepalive';
 import LeadsPanel from '../dashboard/leads-panel';
 import { TABS, type PlatformAccent, type TabConfig, type TabId } from './config';
+import BalanceAlert from './balance-alert';
 import {
   adsPeriodRangeLabel,
   formatBRL,
@@ -60,6 +62,7 @@ const SHOW_TYPEBOT_TAB = false;
 const TAB_ITEMS: { id: TabId; label: string; icon: LucideIcon }[] = [
   { id: 'meta', label: 'Meta', icon: Facebook },
   { id: 'google', label: 'Google', icon: Chrome },
+  { id: 'meta-estagio', label: 'Meta Estágio', icon: MessageCircle },
   ...(SHOW_TYPEBOT_TAB ? [{ id: 'typebot' as const, label: 'Typebot', icon: Bot }] : []),
 ];
 
@@ -223,7 +226,10 @@ function AdsPlatformBody({
         qs.set('until', custom.until);
       }
       if (tab.campaignId) qs.set('campaignId', tab.campaignId);
-      const response = await fetch(`/api/ads/${tab.id}?${qs.toString()}`, {
+      if (tab.resultAction) qs.set('resultAction', tab.resultAction);
+      // Seguidores so fazem sentido na campanha de trafego para o perfil.
+      if (tab.kind !== 'traffic') qs.set('followers', '0');
+      const response = await fetch(`/api/ads/${tab.apiPlatform}?${qs.toString()}`, {
         cache: 'no-store',
       });
       if (response.status === 401) {
@@ -268,7 +274,71 @@ function AdsPlatformBody({
       ? presetLabel
       : `${presetLabel} - ${adsPeriodRangeLabel(period, now)}`;
 
-  const kpis: Kpi[] = [
+  // Alcance/frequencia/CPM e engajamento vem do bloco de video do insights.
+  const v = data?.video;
+
+  // Campanha de ENGAJAMENTO (Direct): so as metricas que importam nesse objetivo.
+  // Nao entram seguidores, retencao de video nem CPC — sao de outra campanha.
+  const engagementKpis: Kpi[] = [
+    {
+      label: 'Investimento',
+      value: totals ? formatBRL(totals.spend) : null,
+      hint: 'Quanto foi gasto nesta campanha no periodo.',
+      icon: <CircleDollarSign className="size-4" aria-hidden />,
+      accent: METRIC_ACCENTS.amber,
+    },
+    {
+      label: config.resultLabel,
+      value: totals ? formatInt(totals.results) : null,
+      hint: 'Quantas pessoas puxaram conversa no Direct a partir do anuncio. E o resultado principal aqui.',
+      icon: <MessageCircle className="size-4" aria-hidden />,
+      accent: METRIC_ACCENTS.blue,
+    },
+    {
+      label: `Custo/${config.resultSingular}`,
+      value: totals ? formatBRL(cpa) : null,
+      hint: 'Quanto custou, em media, cada conversa iniciada no Direct.',
+      icon: <CircleDollarSign className="size-4" aria-hidden />,
+      accent: METRIC_ACCENTS.pink,
+    },
+    {
+      label: 'Alcance',
+      value: v ? formatCompact(v.reach) : null,
+      hint: 'Quantas pessoas DIFERENTES viram o anuncio.',
+      icon: <Users className="size-4" aria-hidden />,
+      accent: METRIC_ACCENTS.teal,
+    },
+    {
+      label: 'Impressões',
+      value: totals ? formatCompact(totals.impressions) : null,
+      hint: 'Quantas vezes o anuncio apareceu na tela (a mesma pessoa pode ver varias vezes).',
+      icon: <Eye className="size-4" aria-hidden />,
+      accent: METRIC_ACCENTS.sky,
+    },
+    {
+      label: 'Frequência',
+      value: v ? formatDecimal(v.frequency) : null,
+      hint: 'Quantas vezes a mesma pessoa viu o anuncio. Acima de 3, costuma cansar.',
+      icon: <Repeat className="size-4" aria-hidden />,
+      accent: METRIC_ACCENTS.orange,
+    },
+    {
+      label: 'CPM',
+      value: v ? formatBRL(v.cpm) : null,
+      hint: 'Quanto custa aparecer 1.000 vezes.',
+      icon: <TrendingUp className="size-4" aria-hidden />,
+      accent: METRIC_ACCENTS.emerald,
+    },
+    {
+      label: 'Engajamento',
+      value: v ? `${formatInt(v.saves)} / ${formatInt(v.shares)}` : null,
+      hint: 'Salvamentos e compartilhamentos — sinais de que o anuncio interessou de verdade.',
+      icon: <Share2 className="size-4" aria-hidden />,
+      accent: METRIC_ACCENTS.rose,
+    },
+  ];
+
+  const trafficKpis: Kpi[] = [
     {
       label: 'Investimento',
       value: totals ? formatBRL(totals.spend) : null,
@@ -323,7 +393,9 @@ function AdsPlatformBody({
     },
   ];
 
-  if (data?.followers !== undefined) {
+  const kpis: Kpi[] = config.kind === 'engagement' ? engagementKpis : trafficKpis;
+
+  if (config.kind === 'traffic' && data?.followers !== undefined) {
     // Como o Business Suite: se der para ler o ganho no periodo, ele e o numero
     // principal (acompanha as datas) e o total vai como legenda. Sem a permissao
     // de insights do IG, mostra so o total.
@@ -348,7 +420,6 @@ function AdsPlatformBody({
   }
 
   // Metricas da campanha de SEGUIDORES com criativo em video (so Meta).
-  const v = data?.video;
   const spend = totals?.spend ?? 0;
   const gainedFollowers = data?.followersGained;
   const costPerFollower = gainedFollowers && gainedFollowers > 0 ? spend / gainedFollowers : null;
@@ -359,7 +430,7 @@ function AdsPlatformBody({
   const profileToFollower =
     v?.profileViews && gainedFollowers !== undefined ? ratio(gainedFollowers, v.profileViews) : null;
 
-  const videoKpis: Kpi[] = v
+  const videoKpis: Kpi[] = v && config.kind === 'traffic'
     ? [
         {
           label: 'Custo por seguidor',
@@ -438,14 +509,8 @@ function AdsPlatformBody({
       ]
     : [];
 
-  // Alerta de saldo da conta (independe do periodo). "Baixo" = < 10% do limite,
-  // ou zerado quando nao ha limite conhecido.
+  // Saldo da conta (independe do periodo) — mostrado no pop-up do canto.
   const balance = data?.balance;
-  const balanceLow = balance
-    ? balance.limit
-      ? balance.remaining < balance.limit * 0.1
-      : balance.remaining <= 0
-    : false;
 
   return (
     <>
@@ -542,27 +607,8 @@ function AdsPlatformBody({
         </div>
       )}
 
-      {/* Alerta de saldo restante da conta (Meta pre-pago / orcamento do Google). */}
-      {balance && (
-        <div
-          className={cn(
-            'mb-5 flex items-center gap-3 rounded-xl border px-4 py-3 text-sm',
-            balanceLow
-              ? 'border-red-500/40 bg-red-500/10 text-red-200'
-              : 'border-amber-400/30 bg-amber-400/10 text-amber-100',
-          )}
-        >
-          <Wallet className="size-4 shrink-0" aria-hidden />
-          <span>
-            Saldo restante na conta:{' '}
-            <strong className="font-semibold">{formatBRL(balance.remaining)}</strong>
-            {balance.label && <span className="opacity-70"> · {balance.label}</span>}
-            {balanceLow && (
-              <span className="ml-1 font-semibold">— saldo baixo, considere recarregar</span>
-            )}
-          </span>
-        </div>
-      )}
+      {/* Saldo da conta: pop-up no canto, que encolhe numa bolinha ao fechar. */}
+      {balance && <BalanceAlert balance={balance} />}
 
       <section className="mb-5 grid grid-cols-2 gap-4 lg:grid-cols-4">
         {kpis.map((kpi) => (
@@ -620,7 +666,9 @@ function AdsPlatformBody({
           Investimento no periodo: {totals ? formatBRL(totals.spend) : '--'}
         </span>
         {data?.followersHandle && <span>@{data.followersHandle}</span>}
-        <span>{config.label} · painel do cliente</span>
+        <span title={APP_BUILT_AT ? `Publicado em ${APP_BUILT_AT}` : undefined}>
+          {config.label} · painel do cliente · {APP_BUILD_LABEL}
+        </span>
       </footer>
     </>
   );

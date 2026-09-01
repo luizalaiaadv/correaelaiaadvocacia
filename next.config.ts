@@ -1,7 +1,51 @@
 import type { NextConfig } from 'next';
+import { execSync } from 'node:child_process';
+import { readFileSync } from 'node:fs';
+
+/**
+ * Versao do projeto, montada no BUILD e injetada no bundle. A parte semantica vem
+ * do package.json (sobe com `npm run version:patch`); o hash do commit muda
+ * sozinho a cada alteracao publicada, entao da para saber exatamente o que esta
+ * no ar sem depender de ninguem lembrar de atualizar um numero.
+ */
+function appVersion(): { version: string; commit: string; builtAt: string } {
+  const { version } = JSON.parse(readFileSync('./package.json', 'utf8')) as { version: string };
+
+  // Na Vercel o hash vem por variavel; localmente perguntamos ao proprio git.
+  let commit = process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7) ?? '';
+  if (!commit) {
+    try {
+      commit = execSync('git rev-parse --short HEAD', { stdio: ['ignore', 'pipe', 'ignore'] })
+        .toString()
+        .trim();
+    } catch {
+      commit = 'local'; // sem git (ex.: copia do codigo sem historico)
+    }
+  }
+
+  // Data ja formatada aqui: virando texto fixo no build, o servidor e o cliente
+  // renderizam a mesma coisa (nada de erro de hidratacao).
+  const builtAt = new Intl.DateTimeFormat('pt-BR', {
+    timeZone: 'America/Sao_Paulo',
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(new Date());
+
+  return { version, commit, builtAt };
+}
+
+const { version, commit, builtAt } = appVersion();
 
 const config: NextConfig = {
   turbopack: {},
+  env: {
+    NEXT_PUBLIC_APP_VERSION: version,
+    NEXT_PUBLIC_APP_COMMIT: commit,
+    NEXT_PUBLIC_APP_BUILT_AT: builtAt,
+  },
   images: {
     remotePatterns: [
       {

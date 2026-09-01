@@ -1,14 +1,16 @@
 {
   "name": "react-example",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "dev": "next dev",
     "optimize-images": "node scripts/optimize-images.mjs",
     "build": "node scripts/optimize-images.mjs && next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "version:patch": "npm version patch --no-git-tag-version",
+    "version:minor": "npm version minor --no-git-tag-version"
   },
   "dependencies": {
     "@typebot.io/react": "^0.10.2",

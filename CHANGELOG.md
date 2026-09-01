@@ -3,6 +3,55 @@
 Registro das mudanças do painel (**correaelaiaadvocacia** — `/dash-ads`).
 Datas em fuso de São Paulo.
 
+## 2026-09-01
+
+### "Campanhas ativas" mostra o nome mesmo sem gasto
+- Antes a lista so era montada a partir da linha de insights; campanha recem-criada
+  (sem veiculacao no periodo) caia em "Nenhuma campanha ativa" e a cliente nao via
+  qual campanha o painel estava acompanhando.
+- Agora o nome vem do proprio no da campanha (`{campaignId}?fields=name`) e a
+  campanha fixada na aba **sempre aparece**, zerada ate comecar a rodar. Continua
+  sendo o **nome real da API**, nunca inventado.
+
+### Nova aba "Meta Estágio" (campanha de engajamento para o Direct)
+- Aba isolada para `[01/09/26] [Escritorio] [Engajamento] Vaga de Estagio`
+  (id `120251748263630213`), separada da campanha de trafego para o perfil —
+  objetivos diferentes nao se comparam pelas mesmas metricas.
+- **Resultado = "Conversas no Direct"**, lido da acao
+  `onsite_conversion.messaging_conversation_started_7d` (e nao de cliques).
+- **So as metricas principais** desse objetivo: Investimento, Conversas no Direct,
+  Custo/conversa, Alcance, Impressoes, Frequencia, CPM e Engajamento
+  (salvamentos/compartilhamentos). **Nao** mostra seguidores nem retencao de video.
+- Como funciona: `TabConfig.kind` (`traffic` | `engagement`) decide o conjunto de
+  cards; `resultAction` decide qual acao conta como resultado (allowlist na rota);
+  `followers=0` desliga a leitura de seguidores nessa aba.
+- Cor propria (laranja) para nao confundir com Meta (azul) e Google (verde).
+
+### Versao do projeto atualiza sozinha
+- O rodape do painel agora mostra **`v1.0.0 · <commit>`** e, ao passar o mouse,
+  a data da publicacao. O hash do commit **muda a cada alteracao publicada**, entao
+  da para confirmar o que esta no ar sem depender de ninguem lembrar de um numero.
+- Montado no build por `next.config.ts` (usa `VERCEL_GIT_COMMIT_SHA` na Vercel e o
+  `git` local no desenvolvimento) e exposto em `lib/app-version.ts`.
+- A parte semantica sai do `package.json` (agora `1.0.0`); para subir:
+  `npm run version:patch` (ou `version:minor`).
+- **Bonus:** o cache do app instalado (service worker) passou a ser versionado por
+  esse mesmo identificador. Antes era `cl-leads-v4`, um numero que so mudava quando
+  alguem lembrava — agora cada deploy cria um cache novo e apaga o antigo sozinho.
+
+### Aviso de saldo virou pop-up (e o limite agora e R$ 100)
+- O banner de saldo saiu do meio da pagina e virou um **pop-up no canto inferior
+  direito**. Ao fechar, ele **nao some**: encolhe numa **bolinha media (44px)** no
+  mesmo canto, que reabre o aviso com um clique.
+- **Nova regra de cor, igual para Meta e Google** (antes era "< 10% do limite"):
+  - **>= R$ 100 -> verde** ("Saldo ok")
+  - **< R$ 100 -> vermelho** ("Saldo baixo") e a **bolinha pisca** (`animate-ping`)
+- O limite fica em `app/_ads/config.ts` -> `LOW_BALANCE_BRL` (basta trocar o numero).
+- Componente novo: `app/_ads/balance-alert.tsx`. Renderiza so no cliente (depois do
+  fetch), entao nao entra no HTML pre-renderizado e nao causa erro de hidratacao.
+- A bolinha pisca **apenas no vermelho** — no verde fica um ponto solido, para nao
+  ficar chamando atencao quando esta tudo certo.
+
 ## 2026-08-28
 
 ### Instalacao no celular (PWA) — Android e iPhone/iPad

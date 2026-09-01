@@ -69,22 +69,89 @@ export const PLATFORMS: Record<PlatformId, PlatformConfig> = {
 export const META_CAMPAIGNS = {
   // [27/08/26] [Escritório] [Tráfego] CAT (Comunicação de Acidente de Trabalho)
   cat: '120251649227200213',
+  // [01/09/26] [Escritório] [Engajamento] Vaga de Estágio (leva para o Direct)
+  estagio: '120251748263630213',
 } as const;
 
 /**
- * Abas de ADS (Meta e Google). A aba Typebot NAO entra aqui: ela mostra a lista
- * de leads (`<LeadsPanel/>`), nao um painel de campanha.
+ * Acao do Meta que conta como "resultado" em cada tipo de campanha. Precisa bater
+ * com o objetivo: trafego entrega clique no link; engajamento para o Direct
+ * entrega conversa iniciada.
  */
-export type TabId = PlatformId | 'typebot';
+export const RESULT_ACTIONS = {
+  linkClick: 'link_click',
+  directConversation: 'onsite_conversion.messaging_conversation_started_7d',
+} as const;
 
-export type TabConfig = PlatformConfig & {
+/**
+ * Abas de ADS. A aba Typebot NAO entra aqui: ela mostra a lista de leads
+ * (`<LeadsPanel/>`), nao um painel de campanha.
+ *
+ * `kind` decide QUAIS metricas o painel mostra — campanhas com objetivos
+ * diferentes nao se comparam pelos mesmos numeros:
+ * - `traffic`     -> trafego para o perfil: seguidores, retencao de video, etc.
+ * - `engagement`  -> engajamento para o Direct: conversas, alcance, frequencia.
+ */
+export type AdsTabId = 'meta' | 'google' | 'meta-estagio';
+export type TabId = AdsTabId | 'typebot';
+export type TabKind = 'traffic' | 'engagement';
+
+export type TabConfig = {
+  id: AdsTabId;
+  /** Qual /api/ads/[platform] consultar (as abas do Meta usam a mesma API). */
+  apiPlatform: PlatformId;
+  label: string;
+  short: string;
+  resultLabel: string;
+  resultSingular: string;
+  kind: TabKind;
   /** Escopar o painel numa unica campanha, pelo ID do Meta. */
   campaignId?: string;
+  /** Acao contada como "resultado" (default: clique no link). */
+  resultAction?: string;
+  accent: PlatformAccent;
 };
 
-export const TABS: Record<PlatformId, TabConfig> = {
-  // Meta: so a campanha CAT de trafego (Resultados = cliques no link; mantem seguidores).
-  meta: { ...PLATFORMS.meta, campaignId: META_CAMPAIGNS.cat },
-  // Google: conta inteira (todas as campanhas ativas), como antes.
-  google: { ...PLATFORMS.google },
+/** Laranja da aba Estagio: distinta do azul do Meta e do verde do Google. */
+const ESTAGIO_ACCENT: PlatformAccent = {
+  badge: 'border-[#e07b39]/40 bg-[#e07b39]/20 text-[#f0a878]',
+  chip: 'bg-[#e07b39]/25 text-[#f0a878]',
+  edge: 'bg-[#e07b39]',
+  glow: 'bg-[#e07b39]/35',
+  rule: 'via-[#e07b39]/80',
+  bar: 'bg-[#e07b39]',
+  barHover: 'group-hover:bg-[#f0a878]',
 };
+
+export const TABS: Record<AdsTabId, TabConfig> = {
+  // Meta: campanha CAT de trafego para o perfil (Resultados = cliques; tem seguidores/video).
+  meta: {
+    ...PLATFORMS.meta,
+    apiPlatform: 'meta',
+    kind: 'traffic',
+    campaignId: META_CAMPAIGNS.cat,
+    resultAction: RESULT_ACTIONS.linkClick,
+  },
+  // Google: conta inteira (todas as campanhas ativas), como antes.
+  google: { ...PLATFORMS.google, apiPlatform: 'google', kind: 'traffic' },
+  // Meta Estagio: campanha de engajamento que leva para o Direct — metricas
+  // proprias (conversas), isoladas da campanha de trafego para o perfil.
+  'meta-estagio': {
+    id: 'meta-estagio',
+    apiPlatform: 'meta',
+    label: 'Meta Estágio',
+    short: 'Estágio',
+    resultLabel: 'Conversas no Direct',
+    resultSingular: 'conversa',
+    kind: 'engagement',
+    campaignId: META_CAMPAIGNS.estagio,
+    resultAction: RESULT_ACTIONS.directConversation,
+    accent: ESTAGIO_ACCENT,
+  },
+};
+
+/**
+ * Limite de "saldo baixo" (em reais), igual para Meta e Google: a partir daqui
+ * o alerta fica VERDE (ok); abaixo, VERMELHO com aviso de recarga.
+ */
+export const LOW_BALANCE_BRL = 100;

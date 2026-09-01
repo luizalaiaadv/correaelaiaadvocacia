@@ -7,6 +7,10 @@ export const dynamic = 'force-dynamic';
 
 const PERIODS: PeriodId[] = ['today', 'yesterday', '7d', '14d', '30d', 'all'];
 
+// Allowlist: o "resultado" muda conforme o objetivo da campanha, mas so aceitamos
+// as acoes que o painel realmente usa.
+const RESULT_ACTIONS = ['link_click', 'onsite_conversion.messaging_conversation_started_7d'];
+
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ platform: string }> },
@@ -17,6 +21,10 @@ export async function GET(
   const period: PeriodId = periodParam && PERIODS.includes(periodParam) ? periodParam : '7d';
   // Escopo opcional numa campanha, pelo ID do Meta.
   const campaignId = url.searchParams.get('campaignId') || undefined;
+  const requestedAction = url.searchParams.get('resultAction');
+  const resultAction = requestedAction && RESULT_ACTIONS.includes(requestedAction) ? requestedAction : undefined;
+  // followers=0 desliga a leitura de seguidores (campanhas que nao sao de perfil).
+  const followers = url.searchParams.get('followers') !== '0';
 
   // Intervalo personalizado (date picker). So vale se as DUAS datas forem
   // YYYY-MM-DD validas; caso contrario cai no preset.
@@ -27,7 +35,7 @@ export async function GET(
 
   try {
     if (platform === 'meta') {
-      const data = await fetchMetaAds(period, { campaignId, range });
+      const data = await fetchMetaAds(period, { campaignId, range, resultAction, followers });
       return NextResponse.json(data, { headers: { 'Cache-Control': 'no-store' } });
     }
     if (platform === 'google') {

@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import type { Lead } from '@/lib/typebot';
 import { cn } from '@/lib/utils';
+import { APP_BUILD_LABEL, APP_BUILT_AT } from '@/lib/app-version';
 import {
   PERIODS,
   UTM_DIMENSIONS,
@@ -430,7 +431,9 @@ export default function LeadsPanel() {
 
       <footer className="mt-6 flex flex-col gap-2 text-xs tracking-wide text-white/35 uppercase sm:flex-row sm:items-center sm:justify-between">
         <span>Total geral: {isLoading ? '--' : stats.total} leads</span>
-        <span>Sincronizacao automatica a cada 10s</span>
+        <span title={APP_BUILT_AT ? `Publicado em ${APP_BUILT_AT}` : undefined}>
+          Sincronizacao automatica a cada 10s · {APP_BUILD_LABEL}
+        </span>
         <span>
           Ultima atualizacao: {lastUpdated ? lastUpdated.toLocaleTimeString('pt-BR') : '--'}
         </span>

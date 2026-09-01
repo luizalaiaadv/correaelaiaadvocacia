@@ -133,7 +133,9 @@ const num = (v?: string) => (v ? Number(v) : 0);
 /** Valor de um action_type dentro de uma lista de acoes. */
 const action = (list: ActionList | undefined, type = 'video_view') =>
   num(list?.find((a) => a.action_type === type)?.value);
-const linkClicks = (row: InsightRow) => action(row.actions, 'link_click');
+/** Acao contada como "resultado". Trafego usa clique; engajamento usa conversa. */
+const DEFAULT_RESULT_ACTION = 'link_click';
+const results = (row: InsightRow, type: string) => action(row.actions, type);
 
 /** Monta as metricas de video/perfil a partir da linha de insights da campanha. */
 function videoStats(row: InsightRow | undefined, profileViews?: number): AdsVideoStats | undefined {
@@ -319,14 +321,24 @@ async function fetchCampaignScoped(
   range: DateRange,
   timeRange: string,
   wantFollowers: boolean,
+  resultAction: string,
   token: string,
 ): Promise<AdsResponse> {
-  const [totalsData, dailyData, follow, balance] = (await Promise.all([
+  const [totalsData, dailyData, campaignInfo, follow, balance] = (await Promise.all([
     graph(`${campaignId}/insights`, { fields: `campaign_name,spend,impressions,clicks,actions,${VIDEO_FIELDS}`, time_range: timeRange }, token),
     graph(`${campaignId}/insights`, { fields: 'spend', time_range: timeRange, time_increment: '1' }, token),
+    // Nome pelo no da campanha: assim ele aparece MESMO sem gasto no periodo
+    // (campanha recem-criada), sempre o nome real da API — nunca inventado.
+    graph(campaignId, { fields: 'name' }, token),
     wantFollowers ? fetchFollowers(token) : Promise.resolve({} as Awaited<ReturnType<typeof fetchFollowers>>),
     fetchAccountBalance(account, token),
-  ])) as [{ data?: InsightRow[] }, { data?: InsightRow[] }, Awaited<ReturnType<typeof fetchFollowers>>, AdsBalance | undefined];
+  ])) as [
+    { data?: InsightRow[] },
+    { data?: InsightRow[] },
+    { name?: string },
+    Awaited<ReturnType<typeof fetchFollowers>>,
+    AdsBalance | undefined,
+  ];
 
   // Seguidores ganhos e visitas ao perfil dependem do IG (dai serem sequenciais).
   const [followersGained, profileViews] = follow.igId
@@ -341,16 +353,20 @@ async function fetchCampaignScoped(
     spend: num(totalRow?.spend),
     impressions: num(totalRow?.impressions),
     clicks: num(totalRow?.clicks),
-    results: totalRow ? linkClicks(totalRow) : 0,
+    results: totalRow ? results(totalRow, resultAction) : 0,
   };
 
   const series = (dailyData.data ?? [])
     .filter((r) => r.date_start)
     .map((r) => ({ key: r.date_start as string, spend: num(r.spend) }));
 
-  const campaigns: AdsResponse['campaigns'] = totalRow
-    ? [{ name: totalRow.campaign_name ?? 'Campanha', spend: totals.spend, clicks: totals.clicks, results: totals.results }]
-    : [];
+  // A aba e fixada nesta campanha, entao ela entra na lista sempre — zerada
+  // enquanto nao houver veiculacao no periodo. Some-la esconderia da cliente
+  // qual campanha o painel esta acompanhando.
+  const campaignName = campaignInfo.name ?? totalRow?.campaign_name ?? 'Campanha';
+  const campaigns: AdsResponse['campaigns'] = [
+    { name: campaignName, spend: totals.spend, clicks: totals.clicks, results: totals.results },
+  ];
 
   return {
     sample: false,
@@ -367,15 +383,21 @@ async function fetchCampaignScoped(
 }
 
 /** Opcoes do painel Meta: escopar numa campanha (por ID) e/ou incluir seguidores. */
-export type MetaOptions = { campaignId?: string; followers?: boolean; range?: DateRange };
+export type MetaOptions = {
+  campaignId?: string;
+  followers?: boolean;
+  range?: DateRange;
+  /** Acao do Meta contada como "resultado" (default: clique no link). */
+  resultAction?: string;
+};
 
 // Cache simples em memoria (por instancia), chaveado por periodo + opcoes.
 const cache = new Map<string, { at: number; value: AdsResponse }>();
 
 export async function fetchMetaAds(period: PeriodId, options: MetaOptions = {}): Promise<AdsResponse> {
-  const { campaignId, followers: wantFollowers = true, range: customRange } = options;
+  const { campaignId, followers: wantFollowers = true, range: customRange, resultAction = DEFAULT_RESULT_ACTION } = options;
   const range = resolveAdsRange(period, customRange);
-  const cacheKey = `${range.since}:${range.until}|${campaignId ?? ''}|${wantFollowers}`;
+  const cacheKey = `${range.since}:${range.until}|${campaignId ?? ''}|${wantFollowers}|${resultAction}`;
   const cached = cache.get(cacheKey);
   if (cached && Date.now() - cached.at < CACHE_TTL_MS) return cached.value;
 
@@ -383,7 +405,7 @@ export async function fetchMetaAds(period: PeriodId, options: MetaOptions = {}):
   const timeRange = metaTimeRange(range);
 
   if (campaignId) {
-    const scoped = await fetchCampaignScoped(campaignId, account, range, timeRange, wantFollowers, token);
+    const scoped = await fetchCampaignScoped(campaignId, account, range, timeRange, wantFollowers, resultAction, token);
     cache.set(cacheKey, { at: Date.now(), value: scoped });
     return scoped;
   }
@@ -402,7 +424,7 @@ export async function fetchMetaAds(period: PeriodId, options: MetaOptions = {}):
     spend: num(totalRow?.spend),
     impressions: num(totalRow?.impressions),
     clicks: num(totalRow?.clicks),
-    results: totalRow ? linkClicks(totalRow) : 0,
+    results: totalRow ? results(totalRow, resultAction) : 0,
   };
 
   const series = (dailyData.data ?? [])
@@ -424,7 +446,7 @@ export async function fetchMetaAds(period: PeriodId, options: MetaOptions = {}):
         name: r.campaign_name ?? 'Campanha',
         spend: num(r.spend),
         clicks: num(r.clicks),
-        results: linkClicks(r),
+        results: results(r, resultAction),
       }))
       .sort((a, b) => b.spend - a.spend);
   }

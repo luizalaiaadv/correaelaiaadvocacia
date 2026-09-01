@@ -4,9 +4,12 @@
 // real" servindo lead antigo do cache seria pior do que nao abrir. O cache cobre
 // apenas a casca visual (icones, textura, bundles estaticos).
 
-// A textura de fundo e cacheada por URL: sempre que ela mudar, suba a versao
-// aqui, senao apps ja instalados continuam mostrando a imagem antiga.
-const CACHE = 'cl-leads-v4';
+// O cache e versionado pelo BUILD: o registro passa `?v=<versao>-<commit>`, que
+// muda a cada alteracao publicada. Assim cada deploy cria um cache novo e o
+// handler de `activate` apaga os antigos — sem precisar subir um numero na mao
+// (era `cl-leads-v4`, que so mudava quando alguem lembrava).
+const VERSION = new URL(self.location.href).searchParams.get('v') || 'dev';
+const CACHE = `cl-painel-${VERSION}`;
 const OFFLINE_URL = '/offline.html';
 
 const PRECACHE = [OFFLINE_URL, '/texture-bg.webp', '/icon-192.png', '/icon-512.png', '/logofooter.webp'];
