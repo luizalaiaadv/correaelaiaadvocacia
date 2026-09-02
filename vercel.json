@@ -2,7 +2,12 @@
   "redirects": [
     {
       "source": "/:path*",
-      "has": [{ "type": "host", "value": "correaelaiaadvocacia.com" }],
+      "has": [
+        {
+          "type": "host",
+          "value": "correaelaiaadvocacia.com"
+        }
+      ],
       "destination": "https://www.correaelaiaadvocacia.com/:path*",
       "permanent": true
     }
@@ -11,7 +16,10 @@
     {
       "source": "/",
       "headers": [
-        { "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" },
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=0, must-revalidate"
+        },
         {
           "key": "Link",
           "value": "</_next/image?url=%2Fdownload.webp&w=1280&q=75>; rel=preload; as=image; fetchpriority=high"
@@ -21,20 +29,35 @@
     {
       "source": "/_next/static/(.*)",
       "headers": [
-        { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
       ]
     },
     {
       "source": "/assets/(.*)",
       "headers": [
-        { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
       ]
     },
     {
       "source": "/(.*\\.webp)",
       "headers": [
-        { "key": "Cache-Control", "value": "public, max-age=604800, stale-while-revalidate=86400" }
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=604800, stale-while-revalidate=86400"
+        }
       ]
+    }
+  ],
+  "crons": [
+    {
+      "path": "/api/push/check-balance",
+      "schedule": "0 12 * * *"
     }
   ]
 }

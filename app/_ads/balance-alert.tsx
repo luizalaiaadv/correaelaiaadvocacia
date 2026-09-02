@@ -1,11 +1,12 @@
 'use client';
 
 import { useState } from 'react';
-import { Wallet, X } from 'lucide-react';
+import { Bell, BellRing, Wallet, X } from 'lucide-react';
 import type { AdsBalance } from '@/lib/meta-ads';
 import { cn } from '@/lib/utils';
 import { formatBRL } from './ads-utils';
 import { LOW_BALANCE_BRL } from './config';
+import { useBalancePush } from './use-balance-push';
 
 /**
  * Aviso de saldo da conta como pop-up no canto inferior direito. Ao fechar, ele
@@ -18,6 +19,7 @@ import { LOW_BALANCE_BRL } from './config';
 export default function BalanceAlert({ balance }: { balance: AdsBalance }) {
   const [open, setOpen] = useState(true);
   const low = balance.remaining < LOW_BALANCE_BRL;
+  const push = useBalancePush();
 
   // Bolinha minimizada: media (44px), pisca so quando o saldo esta baixo.
   if (!open) {
@@ -101,6 +103,34 @@ export default function BalanceAlert({ balance }: { balance: AdsBalance }) {
           <X className="size-4" aria-hidden />
         </button>
       </div>
+
+      {/* Aviso no celular. A permissao SO pode ser pedida a partir de um toque,
+          por isso e um botao — nao da para ativar sozinho ao abrir a tela. */}
+      {push.state !== 'indisponivel' && (
+        <div className="mt-3 border-t border-white/10 pt-3">
+          {push.state === 'ligado' ? (
+            <p className="flex items-center gap-2 text-[11px] text-emerald-200/80">
+              <BellRing className="size-3.5 shrink-0" aria-hidden />
+              Avisos de saldo ligados neste aparelho.
+            </p>
+          ) : push.state === 'bloqueado' ? (
+            <p className="text-[11px] leading-snug text-white/45">
+              As notificações estão bloqueadas para este site. Libere nas configurações do
+              navegador para receber o aviso de saldo.
+            </p>
+          ) : (
+            <button
+              type="button"
+              onClick={() => void push.enable()}
+              disabled={push.state === 'ativando'}
+              className="flex w-full items-center justify-center gap-2 rounded-lg border border-white/15 px-3 py-2 text-xs font-medium text-white/70 transition hover:text-white disabled:opacity-50"
+            >
+              <Bell className="size-3.5" aria-hidden />
+              {push.state === 'ativando' ? 'Ativando…' : 'Avisar no celular'}
+            </button>
+          )}
+        </div>
+      )}
     </div>
   );
 }

@@ -67,3 +67,45 @@ self.addEventListener('fetch', (event) => {
       .catch(() => caches.match(request)),
   );
 });
+
+// --- Push de saldo -----------------------------------------------------------
+// O servidor manda o titulo pronto ("Saldo do Meta" / "Saldo do Google") e o
+// corpo com o valor. Se o payload vier vazio ou quebrado, ainda mostramos um
+// aviso generico — melhor avisar de forma vaga do que engolir a notificacao.
+self.addEventListener('push', (event) => {
+  let data = {};
+  try {
+    data = event.data ? event.data.json() : {};
+  } catch {
+    data = {};
+  }
+
+  const title = data.title || 'Saldo da conta';
+  event.waitUntil(
+    self.registration.showNotification(title, {
+      body: data.body || 'Toque para ver o saldo no painel.',
+      icon: '/icon-192.png',
+      badge: '/icon-192.png',
+      // Mesma tag por plataforma: um aviso novo substitui o antigo em vez de
+      // empilhar varios "Saldo do Meta" na barra de notificacoes.
+      tag: data.tag || 'saldo',
+      renotify: true,
+      data: { url: data.url || '/dash-ads' },
+    }),
+  );
+});
+
+// Tocar na notificacao abre o painel (reaproveita a aba/app ja aberto).
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const target = event.notification.data?.url || '/dash-ads';
+
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
+      for (const client of clients) {
+        if (client.url.includes(target) && 'focus' in client) return client.focus();
+      }
+      return self.clients.openWindow(target);
+    }),
+  );
+});

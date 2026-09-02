@@ -5,6 +5,22 @@ Datas em fuso de São Paulo.
 
 ## 2026-09-01
 
+### Aviso de saldo no celular (push) — Android e iPhone
+- Notificacao **"Saldo do Meta"** e **"Saldo do Google"** quando a conta cai abaixo
+  de R$ 100, mesmo com o painel fechado (Web Push de verdade, nao aviso na tela).
+- Peças: handlers `push`/`notificationclick` no `public/sw.js`; inscricao em
+  `app/_ads/use-balance-push.ts` + botao "Avisar no celular" no pop-up de saldo;
+  `lib/push-store.ts` guarda os aparelhos no Supabase; `app/api/push/subscribe`
+  registra; `app/api/push/check-balance` e chamada pelo **cron da Vercel** (todo
+  dia 09:00 de Brasilia, em `vercel.json`) e dispara os avisos.
+- Seguranca: a inscricao exige login (entrou no matcher do `proxy`); a rota do cron
+  fica fora do proxy e se protege pelo **CRON_SECRET**. Chaves VAPID e o segredo
+  ficam no `.env.local` (gitignored) — precisam ser copiados para a Vercel.
+- Inscricao morta (app desinstalado) e apagada sozinha quando o envio volta 404/410.
+- **iPhone/iPad:** so funciona com o painel **instalado na tela de inicio** e
+  **iOS 16.4+** — no Safari em aba a Apple nao oferece a permissao.
+- Passo a passo (tabela do Supabase, variaveis, teste): `docs/PUSH-SALDO.md`.
+
 ### "Campanhas ativas" mostra o nome mesmo sem gasto
 - Antes a lista so era montada a partir da linha de insights; campanha recem-criada
   (sem veiculacao no periodo) caia em "Nenhuma campanha ativa" e a cliente nao via

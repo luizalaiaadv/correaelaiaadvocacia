@@ -36,5 +36,15 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/dashboard/:path*', '/dash-ads/:path*', '/api/leads', '/api/contacted', '/api/ads/:path*'],
+  matcher: [
+    '/dashboard/:path*',
+    '/dash-ads/:path*',
+    '/api/leads',
+    '/api/contacted',
+    '/api/ads/:path*',
+    // Só a inscrição exige login. `/api/push/check-balance` fica FORA de
+    // propósito: quem chama é o cron da Vercel, que se autentica pelo CRON_SECRET
+    // e não tem cookie de sessão.
+    '/api/push/subscribe',
+  ],
 };
