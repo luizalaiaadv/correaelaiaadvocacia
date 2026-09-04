@@ -58,11 +58,17 @@ import {
  * prontos, entao basta isto para a aba reaparecer. Ver CHANGELOG.md ("Aba Typebot").
  */
 const SHOW_TYPEBOT_TAB = false;
+/**
+ * Flag da aba "Meta Estágio" (campanha de engajamento para o Direct). OCULTA por
+ * enquanto — troque para `true` quando a campanha voltar a ser acompanhada. Toda
+ * a logica (TABS['meta-estagio'], KPIs de engajamento) continua pronta.
+ */
+const SHOW_ESTAGIO_TAB = false;
 
 const TAB_ITEMS: { id: TabId; label: string; icon: LucideIcon }[] = [
   { id: 'meta', label: 'Meta', icon: Facebook },
   { id: 'google', label: 'Google', icon: Chrome },
-  { id: 'meta-estagio', label: 'Meta Estágio', icon: MessageCircle },
+  ...(SHOW_ESTAGIO_TAB ? [{ id: 'meta-estagio' as const, label: 'Meta Estágio', icon: MessageCircle }] : []),
   ...(SHOW_TYPEBOT_TAB ? [{ id: 'typebot' as const, label: 'Typebot', icon: Bot }] : []),
 ];
 
@@ -149,7 +155,7 @@ export default function AdsDashboard() {
             </div>
           </div>
 
-          {/* Seletor de aba (Meta/Google; a aba Typebot entra via SHOW_TYPEBOT_TAB). */}
+          {/* Seletor de aba (Meta/Google; abas Estágio e Typebot entram via flag). */}
           <div
             role="tablist"
             aria-label="Painel"

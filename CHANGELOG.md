@@ -3,6 +3,14 @@
 Registro das mudanças do painel (**correaelaiaadvocacia** — `/dash-ads`).
 Datas em fuso de São Paulo.
 
+## 2026-09-04
+
+### Aba "Meta Estágio" ocultada
+- Escondida atras da flag `SHOW_ESTAGIO_TAB` em `app/_ads/ads-dashboard.tsx`
+  (mesmo padrao da aba Typebot). Painel voltou a mostrar so **Meta** e **Google**.
+- **Nada foi apagado:** `TABS['meta-estagio']`, os KPIs de engajamento e o id da
+  campanha continuam prontos. Para reativar, troque a flag para `true`.
+
 ## 2026-09-01
 
 ### Aviso de saldo no celular (push) — Android e iPhone
