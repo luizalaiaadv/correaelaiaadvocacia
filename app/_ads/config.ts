@@ -67,8 +67,8 @@ export const PLATFORMS: Record<PlatformId, PlatformConfig> = {
  * que se atualiza. O nome ao lado e so referencia humana.
  */
 export const META_CAMPAIGNS = {
-  // [27/08/26] [Escritório] [Tráfego] CAT (Comunicação de Acidente de Trabalho)
-  cat: '120251649227200213',
+  // [28/09/26] [Escritório] [Tráfego] FGTS
+  fgts: '120252130415760213',
   // [01/09/26] [Escritório] [Engajamento] Vaga de Estágio (leva para o Direct)
   estagio: '120251748263630213',
 } as const;
@@ -124,12 +124,12 @@ const ESTAGIO_ACCENT: PlatformAccent = {
 };
 
 export const TABS: Record<AdsTabId, TabConfig> = {
-  // Meta: campanha CAT de trafego para o perfil (Resultados = cliques; tem seguidores/video).
+  // Meta: campanha FGTS de trafego para o perfil (Resultados = cliques; tem seguidores/video).
   meta: {
     ...PLATFORMS.meta,
     apiPlatform: 'meta',
     kind: 'traffic',
-    campaignId: META_CAMPAIGNS.cat,
+    campaignId: META_CAMPAIGNS.fgts,
     resultAction: RESULT_ACTIONS.linkClick,
   },
   // Google: conta inteira (todas as campanhas ativas), como antes.

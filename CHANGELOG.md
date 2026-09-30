@@ -3,6 +3,13 @@
 Registro das mudanças do painel (**correaelaiaadvocacia** — `/dash-ads`).
 Datas em fuso de São Paulo.
 
+## 2026-09-30
+
+### Aba Meta — campanha trocada para a nova FGTS
+- Passou a mostrar `[28/09/26] [Escritorio] [Trafego] FGTS` (id `120252130415760213`,
+  ACTIVE, objetivo trafego) no lugar da CAT. Config: `META_CAMPAIGNS.fgts` em
+  `app/_ads/config.ts`.
+
 ## 2026-09-04
 
 ### Aba "Meta Estágio" ocultada
